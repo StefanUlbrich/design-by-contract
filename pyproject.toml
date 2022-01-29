@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "design-by-contract"
+version = "0.1.0"
+description = "Handy decorators to define contracts with dependency injection in Python 3.10 and above"
+authors = ["Stefan Ulbrich"]
+license = "MIT License"
+readme = "Readme.md"
+packages = [
+    { include = "design_by_contract.py", from = "src" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+decorator = "^5.1.1"
+
+[tool.poetry.dev-dependencies]
+numpy = "^1.22.1"
+pandas = "^1.4.0"
+pylint = "^2.12.2"
+black = "^21.12b0"
+mypy = "^0.931"
+pytest = "^6.2.5"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+python_version = "3.10"
+warn_unused_configs = true
+namespace_packages = true
+mypy_path = "src"
+
+[[tool.mypy.overrides]]
+module = "decorator.*"
+ignore_missing_imports = true
