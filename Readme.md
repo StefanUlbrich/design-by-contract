@@ -7,9 +7,14 @@ Handy decorators to define contracts with dependency injection in Python 3.10 an
 
 TBD
 
-## Installation
+## Installation and dependencies
+
 
 TBD
+
+Depends on:
+
+    * [decorator](https://github.com/micheles/decorator)
 
 ## Example
 
