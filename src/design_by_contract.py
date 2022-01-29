@@ -14,6 +14,7 @@ R = TypeVar("R")
 def _contract(
     func: Callable[P, R],
     definitions: Optional[Dict[str, Callable[..., bool]]] = None,
+    returns: Callable[..., bool] = None,
     *args,
     **kw,
 ) -> R:
@@ -81,17 +82,22 @@ def _contract(
                         logger.debug("contract fullfilled for argument `%s`", arg_name)
 
     result = func(*args, **kw)
+
+    if returns is not None:
+        #TODO
+        raise NotImplementedError("Checking return values not yet supported")
+
     return result
 
 
-def contract(**definitions) -> Callable[[Callable[P, R]], Callable[P, R]]:
+def contract(returns: Optional[Callable[...,bool]] = None, **definitions) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Factory that generates the decorator.
 
     Necessary to support arbitrary keyword arguments to the decorator.
     See `documentation <https://github.com/micheles/decorator/blob/master/docs/documentation.md#decorator-factories>`_"""
 
     def caller(func: Callable[P, R], *args, **kw) -> R:
-        return _contract(func, definitions, *args, **kw)
+        return _contract(func, definitions, returns, *args, **kw)
 
     return decorator(caller)
 

@@ -92,3 +92,14 @@ def test_signature():
         pass
 
     assert "(a: numpy.ndarray, b: typing.Annotated[numpy.ndarray," in str(signature(spam))
+
+
+def test_return():
+    @contract(m=lambda a: a.shape[0], returns=lambda: None)
+    def spam(a: np.ndarray, b: Annotated[np.ndarray, lambda b, m: b.shape == (m, 3)]):
+        """A spam function"""
+        pass
+
+    with pytest.raises(NotImplementedError) as exc_info:
+        spam(b=array2, a=array1)
+    assert str(exc_info.value) == ("Checking return values not yet supported")
