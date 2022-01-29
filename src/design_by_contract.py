@@ -44,7 +44,7 @@ def _contract(func: Callable[P, R], definitions: Dict[str, Callable[..., bool]]=
                 if isinstance(meta, Callable):
                     meta_args = getfullargspec(meta).args
                     if arg_name in meta_args:
-                        dependencies = set(definitions.keys()).intersection(meta_args)
+                        dependencies = set(injectables.keys()).intersection(meta_args)
                         logger.debug(
                             "contract for `%s`, dependencies: `%s`",
                             arg_name,
@@ -66,7 +66,7 @@ def _contract(func: Callable[P, R], definitions: Dict[str, Callable[..., bool]]=
     return result
 
 
-def contract(**definitions) -> Callable[P, R]:
+def contract(**definitions) -> Callable[[Callable[P, R]],Callable[P, R]]:
 
     def caller(f: Callable[P, R], *args, **kw) -> R:
         return _contract(f, definitions, *args, **kw)
@@ -86,6 +86,6 @@ if __name__=="__main__":
 
     spam(np.array([[4, 5, 6, 8]]), np.array([[1, 2, 3]]))
 
-    # spam("asdf", 4)
+    spam("asdf", 4)
 
 
