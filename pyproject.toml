@@ -19,6 +19,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.10"
 decorator = "^5.1.1"
+Jinja2 = {version = "^3.0.3", optional = true}
 
 [tool.poetry.dev-dependencies]
 numpy = "^1.22.1"
@@ -27,6 +28,9 @@ pylint = "^2.12.2"
 black = "^21.12b0"
 mypy = "^0.931"
 pytest = "^6.2.5"
+
+[tool.poetry.extras]
+Jinja2 = ['Jinja2']
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

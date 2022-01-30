@@ -3,6 +3,14 @@ from inspect import get_annotations, getfullargspec
 from typing import Annotated, Callable, Dict, TypeVar, ParamSpec, Optional, Sequence
 from decorator import decorator
 
+
+## OOOh will be difficult as needs to happen at compile time :(
+try:
+    from jinja2 import Template
+    AUGMENT_DOCSTRING=True
+except ModuleNotFoundError:
+    AUGMENT_DOCSTRING=False
+
 logger = logging.getLogger(__name__)
 
 _RESERVED = {"pre", "post"}
@@ -57,6 +65,7 @@ def _contract(
 
     logger.debug("injectables: %s", injectables)
 
+    conditions = []
     for arg_name, annotation in annotations.items():
         # Filter for typing.Annotation objects with extra annotations
         if hasattr(annotation, "__metadata__"):
