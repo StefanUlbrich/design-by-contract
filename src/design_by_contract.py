@@ -1,20 +1,45 @@
 import logging
 from inspect import get_annotations, getfullargspec
-from typing import Annotated, Callable, Dict, TypeVar, ParamSpec, Optional, Sequence
+from typing import (
+    Annotated,
+    Callable,
+    Dict,
+    TypeVar,
+    ParamSpec,
+    Optional,
+    Sequence,
+    Any,
+    Tuple,
+    Set,
+)
 from decorator import decorator
 
 logger = logging.getLogger(__name__)
 
 _RESERVED = {"pre", "post"}
+
+SHORTCUT_SYMBOL = "x"
+
 P = ParamSpec("P")
 R = TypeVar("R")
+
+
+def _evaluate_condition(condition: Callable[..., bool], injectables: Dict[str, Any]) -> Tuple[Set[str], bool]:
+    """Evaluate condition and return the set of unresolved identifiers and the result of the condition."""
+    condition_args = getfullargspec(condition).args
+    unresolved = set(condition_args) - set(injectables.keys())
+
+    if len(unresolved) > 0:
+        return unresolved, False
+
+    return unresolved, condition(*[injectables[i] for i in condition_args])
 
 
 def _contract(
     func: Callable[P, R],
     variables: Optional[Dict[str, Callable[..., bool]]] = None,
     pre: Optional[Sequence[Callable[..., bool]]] = None,
-    post: Optional[Callable[..., bool]] = None,
+    post: Optional[Sequence[Callable[..., bool]]] = None,
     *args,
     **kw,
 ) -> R:
@@ -33,7 +58,7 @@ def _contract(
     # Resolved function arguments passed to func
     argv = {k: v for k, v in zip(annotations.keys(), args)}
 
-    injectables = {}
+    injectables: Dict[str, Any] = {}
 
     # Definitions are variables extracted from the arguments
     # They rules are given to the `contract`` factory
@@ -60,43 +85,46 @@ def _contract(
     for arg_name, annotation in annotations.items():
         # Filter for typing.Annotation objects with extra annotations
         if hasattr(annotation, "__metadata__"):
-            for meta in annotation.__metadata__:
+            for i, meta in enumerate(annotation.__metadata__):
                 # Only consider lambdas/callables
                 if isinstance(meta, Callable):  # type: ignore
                     meta_args = getfullargspec(meta).args
                     # Only if the original argument's name is among its argument names
                     if arg_name in meta_args:
-                        dependencies = set(injectables.keys()).intersection(meta_args)
-                        logger.debug(
-                            "contract for `%s`, dependencies: `%s`",
-                            arg_name,
-                            {i: injectables[i] for i in dependencies},
-                        )
-
-                        # Look for arguments that cannot be injected
-                        unresolved = set(meta_args) - set(injectables.keys())
+                        unresolved, valid = _evaluate_condition(meta, injectables)
                         if len(unresolved) > 0:
                             raise ValueError(
-                                f"Cannot inject `{unresolved}` for argument `{arg_name}`"
+                                f"Cannot inject `{unresolved}` for argument `{arg_name}`, {i+1}. condition"
                             )
-                        # Evaluate contract by injecting values into the lambda
-                        if not meta(*[injectables[i] for i in meta_args]):
-                            raise ValueError(
-                                f"Contract violated for argument: `{arg_name}`"
-                            )
-                        logger.debug("contract fullfilled for argument `%s`", arg_name)
+                        if not valid:
+                            raise ValueError(f"Contract violated for argument: `{arg_name}`, {i+1}. condition")
+
+    if pre is not None:
+        for i, condition in enumerate(pre):
+            unresolved, valid = _evaluate_condition(condition, injectables)
+            if len(unresolved) > 0:
+                raise ValueError(f"Cannot inject `{unresolved}` for the `{i+1}`. global precoditions")
+            if not valid:
+                raise ValueError(f"Contract violated for argument for the `{i+1}`. global precoditions")
 
     result = func(*args, **kw)
 
-    if pre is not None or post is not None:
-        raise NotImplementedError("Checking return values not yet supported")
+    injectables[SHORTCUT_SYMBOL] = result
+
+    if post is not None:
+        for i, condition in enumerate(post):
+            unresolved, valid = _evaluate_condition(condition, injectables)
+            if len(unresolved) > 0:
+                raise ValueError(f"Cannot inject `{unresolved}` for the `{i+1}`. postconditions")
+            if not valid:
+                raise ValueError(f"Contract violated for argument for the `{i+1}`. postconditions")
 
     return result
 
 
 def contract(
     pre: Optional[Sequence[Callable[..., bool]]] = None,
-    post: Optional[Callable[..., bool]] = None,
+    post: Optional[Sequence[Callable[..., bool]]] = None,
     **variables,
 ) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Factory that generates the decorator (necessary for decorator keywords args)"""
@@ -115,9 +143,7 @@ if __name__ == "__main__":
     logger.setLevel(logging.DEBUG)
 
     @contract(m=lambda a: a.shape[0])
-    def spam(
-        a: np.ndarray, b: Annotated[np.ndarray, lambda b, m: b.shape == (m, 3)]
-    ) -> bool:
+    def spam(a: np.ndarray, b: Annotated[np.ndarray, lambda b, m: b.shape == (m, 3)]) -> bool:
         return True
 
     spam(np.array([[4, 5, 6, 8]]), np.array([[1, 2, 3]]))
