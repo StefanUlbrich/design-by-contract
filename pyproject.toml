@@ -11,7 +11,9 @@ packages = [
 ]
 classifiers = [
     "Topic :: Software Development :: Documentation",
-    "Topic :: Software Development :: Quality Assurance"
+    "Topic :: Software Development :: Quality Assurance",
+    "Intended Audience :: Developers",
+    "Development Status :: 3 - Alpha"
 ]
 
 [tool.poetry.dependencies]
