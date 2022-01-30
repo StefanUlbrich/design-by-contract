@@ -26,6 +26,7 @@ You probably shouldn't use it in production yet! But if you do, let me know how 
 
 Please leave a star if you like this project!
 
+
 ### Features
 
 * [x] Simple to used design by contract. Does not require you to learn a domain specific language necessary.
@@ -195,6 +196,32 @@ might serve as an example for new Python developers:
 * [ ] Sphinx documentation
 
 If you think it's cool, please leave a star. And who knows, it might actually be useful.
+
+## Related (active) projects.
+
+It appears that the related (still active) projects have significantly larger code bases
+(include parsers for a domain-specific language, automated testing, etc.) but also try to achieve
+additional and wider goals (automated testing, pure functions, etc.). The main strength
+of this project, in my opinion, lies in its compact codebase and intuitiveness of the
+dependency injection.
+
+* [PyContracts](https://github.com/AndreaCensi/contracts).
+  Originally inspired this project. Although it requires a domain specific language, it supports implicitly defining variables for array shapes (see below). This package tries to achieve
+  a similar goal in pure Python but it requires a formal definition of variables.
+
+  ```ptyhon
+  @contract
+  @contract(a='list[ M ](type(x))',
+            b='list[ N ](type(x))',
+            returns='list[M+N](type(x))')
+  def my_cat_equal(a, b):
+      ''' Concatenate two lists together. '''
+      return a + b
+  ```
+
+* [icontract](https://github.com/Parquery/icontract) and [deal](https://github.com/life4/deal):
+  Rely on conditions defined as lambdas much like this Project. However, their codebase is less
+  lean and the lack of variable definitions make it appear less intuitive to use.
 
 ## Contributions
 
