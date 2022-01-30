@@ -1,20 +1,20 @@
 import logging
 from inspect import get_annotations, getfullargspec
-from typing import Annotated, Callable, Dict, TypeVar, ParamSpec, Optional
-
+from typing import Annotated, Callable, Dict, TypeVar, ParamSpec, Optional, Sequence
 from decorator import decorator
 
 logger = logging.getLogger(__name__)
 
-
+_RESERVED = {"pre", "post"}
 P = ParamSpec("P")
 R = TypeVar("R")
 
 
 def _contract(
     func: Callable[P, R],
-    definitions: Optional[Dict[str, Callable[..., bool]]] = None,
-    returns: Callable[..., bool] = None,
+    variables: Optional[Dict[str, Callable[..., bool]]] = None,
+    pre: Optional[Sequence[Callable[..., bool]]] = None,
+    post: Optional[Callable[..., bool]] = None,
     *args,
     **kw,
 ) -> R:
@@ -25,6 +25,11 @@ def _contract(
 
     annotations = get_annotations(func)
 
+    if len(_RESERVED.intersection(annotations.keys())) > 0:
+        raise ValueError(
+            f"Argument names are not allowed be `{_RESERVED}: {_RESERVED.intersection(annotations.keys())}`"
+        )
+
     # Resolved function arguments passed to func
     argv = {k: v for k, v in zip(annotations.keys(), args)}
 
@@ -32,11 +37,11 @@ def _contract(
 
     # Definitions are variables extracted from the arguments
     # They rules are given to the `contract`` factory
-    if definitions is not None:
-        for var, definition in definitions.items():
+    if variables is not None:
+        for name, definition in variables.items():
             # FIXME mypy error
-            if not isinstance(definition, Callable): # type: ignore
-                raise ValueError(f"Expected callable for dependency `{var}`")
+            if not isinstance(definition, Callable):  # type: ignore
+                raise ValueError(f"Expected callable for dependency `{name}`")
 
             definition_args = getfullargspec(definition).args
             # Only argument names that appear in the decorated function are allowed
@@ -45,7 +50,7 @@ def _contract(
                 raise ValueError(f"Unkown argument names `{unresolved}`")
 
             # inject arguments into definition function
-            injectables[var] = definition(*[argv[i] for i in definition_args])
+            injectables[name] = definition(*[argv[i] for i in definition_args])
 
     # together with the arguments, definitions form the injectables
     injectables |= argv
@@ -57,7 +62,7 @@ def _contract(
         if hasattr(annotation, "__metadata__"):
             for meta in annotation.__metadata__:
                 # Only consider lambdas/callables
-                if isinstance(meta, Callable): # type: ignore
+                if isinstance(meta, Callable):  # type: ignore
                     meta_args = getfullargspec(meta).args
                     # Only if the original argument's name is among its argument names
                     if arg_name in meta_args:
@@ -83,21 +88,21 @@ def _contract(
 
     result = func(*args, **kw)
 
-    if returns is not None:
-        #TODO
+    if pre is not None or post is not None:
         raise NotImplementedError("Checking return values not yet supported")
 
     return result
 
 
-def contract(returns: Optional[Callable[...,bool]] = None, **definitions) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    """Factory that generates the decorator.
-
-    Necessary to support arbitrary keyword arguments to the decorator.
-    See `documentation <https://github.com/micheles/decorator/blob/master/docs/documentation.md#decorator-factories>`_"""
+def contract(
+    pre: Optional[Sequence[Callable[..., bool]]] = None,
+    post: Optional[Callable[..., bool]] = None,
+    **variables,
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    """Factory that generates the decorator (necessary for decorator keywords args)"""
 
     def caller(func: Callable[P, R], *args, **kw) -> R:
-        return _contract(func, definitions, returns, *args, **kw)
+        return _contract(func, variables, pre, post, *args, **kw)
 
     return decorator(caller)
 
