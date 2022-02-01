@@ -7,7 +7,7 @@ license = "MIT"
 repository = "https://github.com/StefanUlbrich/design-by-contract"
 readme = "Readme.md"
 packages = [
-    { include = "design_by_contract.py", from = "src" },
+    { include = "design_by_contract/", from = "src" },
 ]
 classifiers = [
     "Topic :: Software Development :: Documentation",
