@@ -41,3 +41,6 @@ mypy_path = "src"
 [[tool.mypy.overrides]]
 module = "decorator.*"
 ignore_missing_imports = true
+
+[tool.black]
+line-length = 120
