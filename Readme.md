@@ -1,5 +1,8 @@
 # Welcome to `design-by-contract`
 
+
+**Warning the interface has changed on master and the documentation is not adapted yet**
+
 Handy decorator to define contracts with
 [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection)
 in Python 3.10 and above
