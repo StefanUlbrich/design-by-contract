@@ -3,6 +3,8 @@ from inspect import get_annotations, getfullargspec
 from typing import Annotated, Callable, Any, TypeVar, ParamSpec
 from decorator import decorator
 
+from .variables import Delayed, resolve
+
 logger = logging.getLogger(__name__)
 
 P = ParamSpec("P")
@@ -57,12 +59,19 @@ def contract(
 
                             # Look for arguments that cannot be injected
                             unresolved = set(meta_args) - set(injectables.keys())
-                            if len(unresolved) > 0:
-                                raise ValueError(f"Cannot inject `{unresolved}` for argument `{arg_name}`")
+
+                            for i in unresolved:
+                                # If we would not want variables we'd raise an exception here
+                                injectables[i] = Delayed(i)
+
                             # Evaluate contract by injecting values into the lambda
+                            # FIXME boolean or delayed!
                             if not meta(*[injectables[i] for i in meta_args]):
                                 raise ValueError(f"Contract violated for argument: `{arg_name}`")
                             logger.debug("contract fullfilled for argument `%s`", arg_name)
+        # check that the variables are all defined
+        resolve([i for i in injectables.values() if isinstance(i, Delayed)], raise_errors=True)
+
 
     evaluate_annotations(annotations)
 
@@ -96,15 +105,3 @@ if __name__ == "__main__":
     # Correctly creates mypy error:
     # spam("asdf", 4)
 
-
-# def contract(
-#     pre: Optional[Sequence[Callable[..., bool]]] = None,
-#     post: Optional[Callable[..., bool]] = None,
-#     **variables,
-# ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-#     """Factory that generates the decorator (necessary for decorator keywords args)"""
-
-#     def caller(func: Callable[P, R], *args, **kw) -> R:
-#         return _contract(func, variables, pre, post, *args, **kw)
-
-#     return decorator(caller)
