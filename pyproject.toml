@@ -45,3 +45,11 @@ ignore_missing_imports = true
 
 [tool.black]
 line-length = 120
+
+[tool.pylint]
+
+    # [tool.pylint.messages_control]
+    # disable = "C0330, C0326, C0115, C0116, C0114, C0103, C0415"
+
+    [tool.pylint.format]
+    max-line-length = "120"

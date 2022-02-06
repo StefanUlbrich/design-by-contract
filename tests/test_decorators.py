@@ -2,12 +2,15 @@ from inspect import signature
 from typing import Annotated
 
 import numpy as np
+import pandas as pd
+
 import pytest
 from design_by_contract import contract, ContractViolationError, LogicError
 
 array1 = np.array([[4, 5, 6, 8]])
 array2 = np.array([[1, 2, 3]])
 
+# pylint: disable-all
 
 @pytest.fixture
 def correct_spam():
@@ -68,3 +71,24 @@ class TestDecorator:
             return a@b
 
         spam(np.ones((3,2)), np.ones((2,4)))
+
+
+    def test_columns(self):
+
+        @contract
+        def spam(
+            first: Annotated[pd.DataFrame, lambda first, a: a==set(first.columns)],
+            second: Annotated[pd.DataFrame, lambda second, b: b==set(second.columns), lambda a,b: a & b!={}]
+        ) -> Annotated[pd.DataFrame, lambda x, a, b: set(x.columns) == a - b]:
+            return first.drop(columns=set(first.columns) - set(second.columns))
+
+        with pytest.raises(ValueError) as exc_info:
+            spam(
+                pd.DataFrame(np.random.randint(0,100,size=(10, 5)), columns=list('ABCDE')),
+                pd.DataFrame(np.random.randint(0,100,size=(10, 5)), columns=list('FGHIJ')),
+            )
+
+        assert set(spam(
+            pd.DataFrame(np.random.randint(0,100,size=(10, 5)), columns=list('ABCDE')),
+            pd.DataFrame(np.random.randint(0,100,size=(10, 5)), columns=list('EGHIJ')),
+        ).columns) == {'A','B','C','D'}

@@ -1,7 +1,14 @@
 # Welcome to `design-by-contract`
 
 
-**Warning the interface has changed on master and the documentation is not adapted yet**
+* Notes to include
+  * No typechecking in the lambdas (which is good as mypy complains about a lot of the dynamic stuff)
+
+
+
+
+
+**Warning the interface has changed compared to main and the documentation is not completely adapted yet**
 
 Handy decorator to define contracts with
 [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection)
@@ -28,6 +35,42 @@ importantly, this documentation, are still **work in progress**.
 You probably shouldn't use it in production yet! But if you do, let me know how it went.
 
 Please leave a star if you like this project!
+
+Lets see how the package and its decorator can be used. A trivial function the matrix product of two arrays serves as
+and example. For this operation, we want to impose the conditions on the arguments that the number of columns of the first
+matches number of rows of the second and that the returned array is shaped accordingly.
+
+```python
+from design_by_contract import contract
+import numpy as np
+
+@contract
+def spam(
+        first: Annotated[np.ndarray, lambda first, m, n: a.shape == (m, n)],
+        second: Annotated[np.ndarray, lambda x, n, o: x.shape == (n, o)],
+    ) -> Annotated[np.ndarray, lambda x, m,o: x.shape == (m, o)]:
+        return a@b
+
+spam(np.ones((3,2)), np.ones((2,4))) # passes the condition check
+spam(np.ones((3,2)), np.ones((4,2))) # fails with a ContractViolationError
+```
+
+We see that the decorator itself does not take arguments (it does actually, but only for changing its behavior).
+The contracts are specified as lambda functions within [Annotated]() objects instead. These are rather new
+and allow for annotations  while keeping type annotations. The first argument is therefore always the type (here `np.ndarray`s).
+The Lambdas need to have one argument name that matches the name of the argument (e.g., `first`). An exception is the shortcut
+`x` which refers always to the current argument.  For the
+return value `x` has to be used. This imposes a limitation: `x`  may not be used as a argument name of the decorated function `spam`.
+However, you can change the symbol to any valid variable identifier than `x` via the `reserved` parameter to the `contract` decorator.
+
+Note that there are three argument names that don't match any of those of `spam` (or `x`): `m`,`n` and `o`. These are variables
+that can be used among all contracts to keep the contracts more compact and to not discourage descriptive longer variable names.
+However, assignments are not allowed within lambda expressions, so the equality operator acts as a replacement. If there are
+multiple contradicting equalities the decorator will raise an exception.
+
+Under the hood, an object is created for each argument name that wraps the possible values and checks for violations
+(following the [delegator pattern]()). This is way less sophisticated as using a symbolic package like [sympy]() but on the other hand,
+the logic can be implemented in ~100 lines of code and looking at the implementation might prove educational for the interested.
 
 
 ### Features
@@ -191,7 +234,7 @@ might serve as an example for new Python developers:
   and [`typing.get_annotations()`](get_annotations)  (3.10)
 * [x] Clean decorator design with the [decorator](https://github.com/micheles/decorator) package
 * [x] Project management with [Poetry](https://python-poetry.org/)
-* [x] Clean code (opinionated), commented code, type annotations and unit tests ([pytest](https://docs.pytest.org/en/6.2.x/)). Open for criticism.
+* [x] Clean code (opinionated), commented code, type annotations and unit tests ([pytest/fixtures](https://docs.pytest.org/en/6.2.x/)). Open for criticism.
 * [x] Leveraging logging facilities
 * [x] Sensible exceptions
 * [x] Good documentation (ok, only half a check)
