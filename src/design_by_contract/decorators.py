@@ -1,13 +1,22 @@
 import logging
 from inspect import get_annotations, getfullargspec
-from typing import Annotated, Callable, Any, TypeVar, ParamSpec
+from typing import Annotated, Callable, Any, Sequence, TypeVar, ParamSpec
 from decorator import decorator
+from dill.source import getsource
 
 logger = logging.getLogger(__name__)
 
 P = ParamSpec("P")
 R = TypeVar("R")
 
+
+def make_iterable(x: Any) -> Sequence:
+    """Check if argument is a sequence and if not, return wrapped in a list."""
+    try:
+        _ = iter(x)
+        return x
+    except TypeError:
+        return [x]
 
 @decorator
 def contract(
@@ -36,6 +45,7 @@ def contract(
     logger.debug("injectables: %s", injectables)
 
     def evaluate_annotations(annotations: dict[str, Any]) -> None:
+        nonlocal injectables
         for arg_name, annotation in annotations.items():
 
             # Filter for typing.Annotation objects with extra annotations
@@ -45,7 +55,10 @@ def contract(
                     if isinstance(meta, Callable):  # type: ignore
                         meta_args = getfullargspec(meta).args
                         # Only if the original argument's name is among its argument names
+                        # TODO we shold remove that
                         if arg_name in meta_args or reserved in meta_args:
+
+                            logger.debug('Source code `%s`', getsource(meta))
                             # the reserved identifier is a shortcut
                             injectables[reserved] = injectables[arg_name]
                             dependencies = set(injectables.keys()).intersection(meta_args)
@@ -56,13 +69,26 @@ def contract(
                             )
 
                             # Look for arguments that cannot be injected
-                            unresolved = set(meta_args) - set(injectables.keys())
-                            if len(unresolved) > 0:
-                                raise ValueError(f"Cannot inject `{unresolved}` for argument `{arg_name}`")
-                            # Evaluate contract by injecting values into the lambda
-                            if not meta(*[injectables[i] for i in meta_args]):
-                                raise ValueError(f"Contract violated for argument: `{arg_name}`")
-                            logger.debug("contract fullfilled for argument `%s`", arg_name)
+                            if unresolved := set(meta_args) - set(injectables.keys()):
+
+                                placeholder = {i: None for i in unresolved} | injectables
+                                result = make_iterable(meta(*[placeholder[i] for i in meta_args]))
+
+                                if len(unresolved) != len(result):
+                                    raise ValueError(f"Cannot inject `{unresolved}` for argument `{arg_name}`")
+
+                                ordered_unresolved = [i for i in meta_args if i in unresolved ]
+
+                                variables = dict(zip(ordered_unresolved, result))
+                                injectables |= variables
+                                logger.debug("Add injectables `%s`", variables)
+
+                            else:
+
+                                # Evaluate contract by injecting values into the lambda
+                                if not meta(*[injectables[i] for i in meta_args]):
+                                    raise ValueError(f"Contract violated for argument: `{arg_name}`")
+                                logger.debug("contract fullfilled for argument `%s`", arg_name)
 
     evaluate_annotations(annotations)
 
@@ -86,25 +112,11 @@ if __name__ == "__main__":
 
     @contract
     def spam(
-        a: np.ndarray, b: Annotated[np.ndarray, lambda a, b: a.shape[1] == b.shape[0]]
-    ) -> Annotated[np.ndarray, lambda x, a: x.shape[0] == a.shape[0], lambda x, b: x.shape[1] == b.shape[1]]:
+        a: Annotated[np.ndarray, lambda x, m, n: x.shape],
+        b: Annotated[np.ndarray, lambda x, o, p: x.shape, lambda x,n,o: n==o],
+    ) -> Annotated[np.ndarray, lambda x, m, p: x.shape == (m,p)]:
         return a @ b
 
     print(get_annotations(spam))
     spam(np.zeros((3, 2)), np.zeros((2, 4)))
 
-    # Correctly creates mypy error:
-    # spam("asdf", 4)
-
-
-# def contract(
-#     pre: Optional[Sequence[Callable[..., bool]]] = None,
-#     post: Optional[Callable[..., bool]] = None,
-#     **variables,
-# ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-#     """Factory that generates the decorator (necessary for decorator keywords args)"""
-
-#     def caller(func: Callable[P, R], *args, **kw) -> R:
-#         return _contract(func, variables, pre, post, *args, **kw)
-
-#     return decorator(caller)
