@@ -7,7 +7,7 @@ license = "MIT"
 repository = "https://github.com/StefanUlbrich/design-by-contract"
 readme = "Readme.md"
 packages = [
-    { include = "design_by_contract/", from = "src" },
+    { include = "design_by_contract.py", from = "src" },
 ]
 classifiers = [
     "Topic :: Software Development :: Documentation",
@@ -27,6 +27,7 @@ pylint = "^2.12.2"
 black = "^21.12b0"
 mypy = "^0.931"
 pytest = "^6.2.5"
+ipykernel = "^6.9.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -44,3 +45,4 @@ ignore_missing_imports = true
 
 [tool.black]
 line-length = 120
+target_version = ["py310"]

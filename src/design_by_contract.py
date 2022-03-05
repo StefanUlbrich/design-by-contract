@@ -1,22 +1,60 @@
+from dataclasses import dataclass
 import logging
 from inspect import get_annotations, getfullargspec
-from typing import Annotated, Callable, Any, Sequence, TypeVar, ParamSpec
+from typing import Annotated, Callable, Any, TypeVar, ParamSpec, Optional
 from decorator import decorator
-from dill.source import getsource
 
 logger = logging.getLogger(__name__)
 
-P = ParamSpec("P")
-R = TypeVar("R")
+
+class ContractViolationError(Exception):
+    """Raised when a contract is violated"""
 
 
-def make_iterable(x: Any) -> Sequence:
-    """Check if argument is a sequence and if not, return wrapped in a list."""
-    try:
-        _ = iter(x)
-        return x
-    except TypeError:
-        return [x]
+class ContractLogicError(Exception):
+    """Raised when there is a syntactical error"""
+
+
+@dataclass
+class UnresolvedSymbol:
+    name: str
+    value: Optional[Any] = None
+
+    def __eq__(self, other: Any) -> "UnresolvedSymbol":
+        match other:
+            case UnresolvedSymbol(None):
+                if self.value is None:
+                    raise ContractViolationError(f"Symbols `{self.name}` and `{other.name}` undefined")
+                other.value = self.value
+            case UnresolvedSymbol(value) if value != self.value:
+                raise ContractViolationError(
+                    f"Symbols `{self.name}` and `{other.name}` do not match: `{self.value}` != `{other.value}`"
+                )
+            case value if value != value:
+                raise ContractViolationError(
+                    f"Symbols `{self.name}` and `{other}` do not match: `{self.value}` != `{other}`"
+                )
+            case value:
+                self.value = value
+        return self
+
+    # def __bool__(self) -> bool:
+    #     raise ContractLogicError(
+    #         f"The symbol {self.name} cannot be convert to bool. Please create a separate condition"
+    #     )
+
+
+# def make_iterable(x: Any) -> Sequence:
+#     """Check if argument is a sequence and if not, return wrapped in a list."""
+#     try:
+#         _ = iter(x)
+#         return x
+#     except TypeError:
+#         return [x]
+
+
+P, R = ParamSpec("P"), TypeVar("R")
+
 
 @decorator
 def contract(
@@ -58,12 +96,11 @@ def contract(
                         # TODO we shold remove that
                         if arg_name in meta_args or reserved in meta_args:
 
-                            logger.debug('Source code `%s`', getsource(meta))
                             # the reserved identifier is a shortcut
                             injectables[reserved] = injectables[arg_name]
                             dependencies = set(injectables.keys()).intersection(meta_args)
                             logger.debug(
-                                "contract for `%s`, dependencies: `%s`",
+                                "contract for `%s`, resolved: `%s`",
                                 arg_name,
                                 {i: injectables[i] for i in dependencies},
                             )
@@ -71,24 +108,25 @@ def contract(
                             # Look for arguments that cannot be injected
                             if unresolved := set(meta_args) - set(injectables.keys()):
 
-                                placeholder = {i: None for i in unresolved} | injectables
-                                result = make_iterable(meta(*[placeholder[i] for i in meta_args]))
+                                symbols = {i: UnresolvedSymbol(i) for i in unresolved}
 
-                                if len(unresolved) != len(result):
-                                    raise ValueError(f"Cannot inject `{unresolved}` for argument `{arg_name}`")
+                                logger.debug("contract for `%s`, unresolved: `%s`, %s", arg_name, unresolved, symbols)
 
-                                ordered_unresolved = [i for i in meta_args if i in unresolved ]
+                                result = meta(*[(symbols | injectables)[i] for i in meta_args])
 
-                                variables = dict(zip(ordered_unresolved, result))
-                                injectables |= variables
-                                logger.debug("Add injectables `%s`", variables)
+                                if any([i.value is None for i in symbols.values()]):
+                                    raise ContractLogicError(f"Not all symbols were resolved `%s`", symbols)
+
+                                injectables |= {k: v.value for k, v in symbols.items()}
 
                             else:
 
+                                result = meta(*(_args := [injectables[i] for i in meta_args]))
+
                                 # Evaluate contract by injecting values into the lambda
-                                if not meta(*[injectables[i] for i in meta_args]):
-                                    raise ValueError(f"Contract violated for argument: `{arg_name}`")
-                                logger.debug("contract fullfilled for argument `%s`", arg_name)
+                            if not result:
+                                raise ContractViolationError(f"Contract violated for argument: `{arg_name}`")
+                            logger.debug("contract fullfilled for argument `%s`", arg_name)
 
     evaluate_annotations(annotations)
 
@@ -113,10 +151,9 @@ if __name__ == "__main__":
     @contract
     def spam(
         a: Annotated[np.ndarray, lambda x, m, n: x.shape],
-        b: Annotated[np.ndarray, lambda x, o, p: x.shape, lambda x,n,o: n==o],
-    ) -> Annotated[np.ndarray, lambda x, m, p: x.shape == (m,p)]:
+        b: Annotated[np.ndarray, lambda x, o, p: x.shape, lambda x, n, o: n == o],
+    ) -> Annotated[np.ndarray, lambda x, m, p: x.shape == (m, p)]:
         return a @ b
 
     print(get_annotations(spam))
     spam(np.zeros((3, 2)), np.zeros((2, 4)))
-
