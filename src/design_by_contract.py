@@ -38,10 +38,9 @@ class UnresolvedSymbol:
                 self.value = value
         return self
 
-    # def __bool__(self) -> bool:
-    #     raise ContractLogicError(
-    #         f"The symbol {self.name} cannot be convert to bool. Please create a separate condition"
-    #     )
+    def __bool__(self) -> bool:
+        return (self.value is not None)
+
 
 
 # def make_iterable(x: Any) -> Sequence:
@@ -112,7 +111,8 @@ def contract(
 
                                 logger.debug("contract for `%s`, unresolved: `%s`, %s", arg_name, unresolved, symbols)
 
-                                result = meta(*[(symbols | injectables)[i] for i in meta_args])
+                                if  not meta(*[(symbols | injectables)[i] for i in meta_args]):
+                                    raise ContractViolationError(f"Contract violated for argument: `{arg_name}`")
 
                                 if any([i.value is None for i in symbols.values()]):
                                     raise ContractLogicError(f"Not all symbols were resolved `%s`", symbols)
@@ -121,18 +121,16 @@ def contract(
 
                             else:
 
-                                result = meta(*(_args := [injectables[i] for i in meta_args]))
-
                                 # Evaluate contract by injecting values into the lambda
-                            if not result:
-                                raise ContractViolationError(f"Contract violated for argument: `{arg_name}`")
-                            logger.debug("contract fullfilled for argument `%s`", arg_name)
+                                if not meta(*(_args := [injectables[i] for i in meta_args])):
+                                    raise ContractViolationError(f"Contract violated for argument: `{arg_name}`")
+
+                            logger.debug("Contract fullfilled for argument `%s`", arg_name)
 
     evaluate_annotations(annotations)
 
     result = func(*args, **kw)
 
-    logger.debug(return_annotation)
     if return_annotation is not None:
         injectables["return"] = result
         logger.debug(injectables)
@@ -150,10 +148,9 @@ if __name__ == "__main__":
 
     @contract
     def spam(
-        a: Annotated[np.ndarray, lambda x, m, n: x.shape],
-        b: Annotated[np.ndarray, lambda x, o, p: x.shape, lambda x, n, o: n == o],
-    ) -> Annotated[np.ndarray, lambda x, m, p: x.shape == (m, p)]:
+        a: Annotated[np.ndarray, lambda x, m, n: (m, n) == x.shape],
+        b: Annotated[np.ndarray, lambda x, n, o: (n, o) == x.shape],
+    ) -> Annotated[np.ndarray, lambda x, m, o: x.shape == (m, o)]:
         return a @ b
 
-    print(get_annotations(spam))
     spam(np.zeros((3, 2)), np.zeros((2, 4)))

@@ -114,6 +114,16 @@ class TestNumpy:
 
         assert str(exc_info.value) == ("Contract violated for argument: `a`")
 
+    def test_vstack(self):
+
+        @contract
+        def spam(
+            a: Annotated[np.ndarray, lambda x, m, o: (m, o) == x.shape],
+            b: Annotated[np.ndarray, lambda x, n, o: (n, o) == x.shape],
+        ) -> Annotated[np.ndarray, lambda x, m,n,o: x.shape == (m+n, o)]:
+            print(np.vstack((a,b)).shape)
+            return np.vstack((a,b))
+        spam(np.zeros((3, 2)), np.zeros(( 4, 2)))
 
 class TestGeneral:
     def test_docstring(self):

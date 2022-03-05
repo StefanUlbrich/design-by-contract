@@ -1,14 +1,9 @@
 # Welcome to `design-by-contract`
 
+A minimalistic decorator for the [design by contract pattern](https://en.wikipedia.org/wiki/Design_by_contract)
+written in a just little more than 100 lines of modern Python 3.10 code (not counting documentation and logging).
 
-**Warning the interface has changed on master and the documentation is not adapted yet**
 
-Handy decorator to define contracts with
-[dependency injection](https://en.wikipedia.org/wiki/Dependency_injection)
-in Python 3.10 and above
-without the need of a domain specific language. It helps following the
-[design by contract](https://en.wikipedia.org/wiki/Design_by_contract)
-paradigm.
 
 Contracts are useful to impose restrictions and constraints on function arguments in a way that
 
@@ -18,185 +13,138 @@ Contracts are useful to impose restrictions and constraints on function argument
   that is always up-to-date,
 * allow relations between arguments.
 
-Possible use cases are asserting mutual columns in
-[data frames](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html),
-limiting the value range or checking data types in its columns, checking the dimensions
-of arrays and tensors, and much more. Note that validation can only occur at runtime!
+Install with
 
-The first version has been developed in a single afternoon and therefore, this package and more
-importantly, this documentation, are still **work in progress**.
-You probably shouldn't use it in production yet! But if you do, let me know how it went.
+```sh
+pip install design-by-contract
+```
 
-Please leave a star if you like this project!
+**Warning**
+
+This project started as a weekend project to learn recent additions to the language (`typing.Annotated` and `typing.ParamSpec`, the [walruss operator](), [pattern matching]() and others). This means also that this package and its documentation should be considered as **work in progress**.
+You probably shouldn't use it in production yet! But if you do, let me know how it went. Please leave a star if you like this project!
+
+## Application
 
 
-### Features
+The decorator has been mainly designed with [numpy arrays](https://numpy.org) and [pandas DataFrames](https://pandas.pydata.org/)
+in mind but can be universally applied.
+Contracts are defined as lambda functions that are attached to the function arguments via the
+[new Annotated type](https://www.python.org/dev/peps/pep-0593/) that allows adding additional information
+to the arguments' and return value's type hint. Arguments are inserted into the lambda via
+[dependency injection](https://en.wikipedia.org/wiki/Dependency_injection) and working with
+symbols to increase readability is supported.
+
+
+Let's look at an example for for matrix multiplication!
+
+```python
+from typing import Annotated
+import numpy as np
+from design_by_contract import contract
+
+@contract
+def spam(
+    first: Annotated[np.ndarray, lambda first, m, n: (m, n) == first.shape], # symbols m and n represent the shape of `a`
+    second: Annotated[np.ndarray, lambda second, n, o: (n, o) == second.shape], # `b` number of columns matches the number of rows of `a`
+) -> Annotated[np.ndarray, lambda x, m, o: x.shape == (m, o)]: # `x` holds the return value. The shape of `x` must equal `x` times `o`
+    """Matrix multiplication"""
+    return a @ b
+```
+
+Contracts are lamdbas with one argument named like the annotated argument. Alternatively, `x` can be used as a shortcut which means
+that you cannot use `x` as a function argument unless you choose another reserved (using the `reserved` argument `contractor` decorator).
+Symbolic  calculus is supported to certain degree to make your life easier. The symbols `m`, `n` and `o` are defined in a way
+that
+
+$$ \text spam: R^{m \times x} \times R^{n\times o} \rightarrow R^{m\times o} $$
+
+Note however, that this package does **not** intend to be a symbolic calculus package and therefore, there are some strong limitations.
+
+Python does not allow for assignments (`=`) in a lambda expression and therefore,
+the equality operator (`==`) is chosen to act a replacement. Unknown arguments are replaced under the hood by an instance of `UnresolvedSymbol`
+that overload this operator. As a consequence, each symbol, therefore has to be first appear in an equality before it can be used *in a different* lambda expression!
+
+The following example will raise an error for instance:
+
+```Python
+@contract
+def spam(
+    a: Annotated[np.ndarray, lambda x, m, n: (m, n) == x.shape and m > 2], # you cannot "assign" and use `m` in the same lambda
+    #  Annotated[np.ndarray, lambda x, m, n: (m, n) == x.shape, lambda x, m:  m > 2] # this would work
+    b: Annotated[np.ndarray, lambda x, n, o: (n, o) == x.shape],
+) -> Annotated[np.ndarray, lambda x, m, o: x.shape == (m, o)]:
+    return a @ b
+
+spam(a, b) # raises: '>' not supported between instances of 'UnresolvedSymbol' and 'int'
+```
+
+This design decision is arguably unclean but allows for elegant contract expressions and a very clean and compact implementation.
+Different approaches involving symbolic algebra packages like [sympy]() or parsing a syntax trees were considered but turned out
+to be too complex to implement. The next best alternative is using a domain-specific language (DLS) as done in  the excellent
+[pycontracts](https://github.com/AndreaCensi/contracts) package, which
+actually inspired this project. By using python, calculus in the contract can be arbitrarily
+complex without the need for extending the DSL (i.e., including python functions):
+
+```python
+@contract
+def spam(
+    a: Annotated[np.ndarray, lambda x, m, o: (m, o) == x.shape],
+    b: Annotated[np.ndarray, lambda x, n, o: (n, o) == x.shape],
+) -> Annotated[np.ndarray, lambda x, m,n,o: x.shape == (m+n, o)]:
+    print(np.vstack((a,b)).shape)
+    return np.vstack((a,b))
+spam(np.zeros((3, 2)), np.zeros(( 4, 2)))
+```
+
+The decorator is also quite handy for being used with pandas data frames:
+
+
+```python
+@contract
+def spam(a: Annotated[pd.DataFrame,
+                      lambda x, c: c == {'C','B'}, # `x` or the argument name must be passed to the lambda
+                      lambda x, c: c.issubset(x.columns) # Remember, we need to use two lambdas here!
+                     ],
+         b: Annotated[pd.DataFrame,
+                      lambda x, c: c <= set(x.columns) # equivalent to `issubset` but more elegant
+                     ]
+        ) -> Annotated[pd.DataFrame,
+                       lambda x, c: c <= set(x.columns)]:
+    """Matrix multiplication"""
+    return pd.merge(a,b,on=['B','C'])
+
+spam(a, b)
+```
+
+
+
+## Features
 
 * [x] Simple to used design by contract. Does not require you to learn a domain specific language necessary.
   * [x] Uses python language features only. Some of them recently introduced (i.e., in Python 3.10)
   * [x] Preconditions written as lambda functions
-  * [x] Scope variables can be defined to simplify definition of conditions
+  * [x] Additional symbols can be used to achieve compact contracts
   * [x] [Dependency injection](https://en.wikipedia.org/wiki/Dependency_injection) based on argument names
-  * [ ] Postconditions (planned)
+  * [x] Postconditions
 * [x] Encourages static typing
   * [x] Does not break your type checking & code completion (tested with [mypy](https://mypy.readthedocs.io/en/stable/) and [visual studio code](https://code.visualstudio.com/))
   * [x] Uses annotations for defining conditions
   * [ ] Optional dynamic type checking (planned)
 * [x] Preserves your docstrings (thanks to [`decorator`](https://github.com/micheles/decorator)).
       Plays well with [Sphinx](https://www.sphinx-doc.org/en/master/)
-  * [ ] Method to insert contracts to docstrings (planned). Probably using Jinja templates.
 * [x] Small, clean (opinionated) code base
   * [x] Implementation in a single file with ~100 lines of code!
   * [x] Currently only one runtime dependency!
 * [ ] Speed. Well.. maybe it is fast, I haven't tested it yet
 
-## Usage
-
-### Installation
-
-The package is available (or will be shortly) on
-[pypi](https://pypi.org/project/design-by-contract/). Install it with
-
-```sh
-pip install design-by-contract
-```
-
-To build the package from sources, you need [Poetry](https://python-poetry.org/).
-
-Design-by-contract depends only on the [decorator](https://github.com/micheles/decorator)
-package at runtime!
-
-### Dependency injection
-
-The decorator in this package uses
-[dependency injection](https://en.wikipedia.org/wiki/Dependency_injection) make the definition of
-contracts as simple and natural as possible. That means that identifiers used in *conditions* and
-must match either argument or *contract variable* names.
-
-### Conditions
-
-Unlike the excellent
-[pycontracts](https://github.com/AndreaCensi/contracts) package,
-no domain specific language is required. Their definition requires Lambda expressions instead
-which arguments are filled by dependency injection.
-This way of defining contracts is very powerful and easy to use.
-
-Conditions are defined as lambdas so imagine
-a function `spam(a: List[int],b: List[str])`, a condition that enforces the same length of both
-arguments looks like:
-
-```python
-lambda a, b: len(a) == len(b)
-```
-
-Note that the arguments to the lambda have to match the arguments of `spam` in order to be injected.
-If they cannot be resolved, then a `ValueError` will be raised.
-
-Conditions are associated with arguments. Therefore, they have to be specified
-together with the type annotations. Since Python 3.10, this is supported with
-`typing.Annotated`:
-
-```python
-@contract
-def spam(
-    a: List[int],
-    b: Annotated[List[str], lambda a, b: len(a) == len(b)]
-)
-```
-
-**Important:** The argument that is annotated has to appear in the lambda arguments in
-order to be recognized as a condition! Also, conditions should return a boolean value.
-
-Currently, it is not possible to define conditions in the decorator itself. The `pre` and
-`post` identifiers are reserved for this purpose but are not supported yet.
-
-### Contract variables
-
-To organize contracts and increase readability, contract variables that can be used in the
-conditions are supported. In above example, the contract variables `m` could be assigned to
-`len(a)` and then be used in the conditions. Contract variables are defined as
-keyword arguments to the `contract` decorator:
-
-```python
-@contract(
-    m=lambda a: len(a),
-)
-def spam(
-    a: Annotated[List[int], lambda a, m: m <= 5], # needs to contain the argument even if unused!
-    b: Annotated[List[str], lambda b, m: m == len(b)]
-)
-```
-
-### Complete working example
-
-Consider a function that accepts two
-[numpy arrays](https://numpy.org/doc/stable/reference/generated/numpy.array.html) as
-parameters but requires that both
-have exactly the same numbers of rows. With this package, this can be achieved by the following
-code.
-
-
-```python
-from typing import Annotated
-from design_by_contract import contract
-
-@contract(m=lambda a: a.shape[0])
-def spam(
-    a: np.ndarray,
-    b: Annotated[np.ndarray, lambda b, m: b.shape == (m, 3)]
-) -> None: pass
-
-array1 = np.array([[4, 5, 6, 8]])
-array2 = np.array([[1, 2, 3]])
-
-spam(array1, array2) # or (arguments are resolved correctly)
-spam(a=array1,b=array2) # or
-spam(b=array2,a=array1) # but not
-spam(a=array2,b=array1) # raises ValueError
-```
-
-Here, the decorator is initialized with a contract variable definition of `m` . It holds the number
-of rows of the array `a`, the first argument of `spam`.
-This is achieved by passing a `m` as a keyword argument with a lambda expression that takes a single
-argument named `a`. The lambda's argument(s) have to match argument names of `spam`. The contract decorator
-will then inject the value of the argument `a` into the lambda expression when `spam` is eventually evaluated.
-
-The arguments of `spam` can be annotated by using `typing.Annotated` if there is a condition for them.
-`Annotated` first requires a type definition. Any following lambda expression that contains the
-same argument name (in this case, `b`) is interpreted as a contract. The lambdas should return a boolean value!
-Note that there can be multiple conditions in the same annotation.
-
-All the expressions arguments must have the same name as either an argument of `spam`
-or a contract variable (i.e., `a`,`b` or `m`). Again, the respective values are injected by the decorator when the function is evaluated.
-
-## What's missing?
-
-Currently, contracts for return types (i.e., post conditions) cannot be specified.
-The identifier `post` is reserved already but using it throws a `NotImplementedError` for now.
-Implementation, however, is straight forward
-(I am accepting pull requests). Documentation can certainly be improved.
-
-In the future, optional run-time type checking might be worth considering.
-
 ## Why?
 
 I had the idea a while ago when reading about `typing.Annotated` in the release notes of Python 3.9.
-Eventually, it turned out to be a nice, small Saturday afternoon project and a welcomed
+Eventually, it turned out to be a nice, small Weekend project and a welcomed
 opportunity to experiment with novel features in Python 3.10.
-In addition, it has been a good exercise to practice several aspects of modern Python development and eventually
+In addition, it has been a good exercise to practice several aspects of modern and clean Python development and eventually
 might serve as an example for new Python developers:
-
-* [x] Recent python features: [`typing.Annotation`](https://docs.python.org/3/library/typing.html#typing.Annotated) (3.9),
-  [`typing.ParamSpec`](https://docs.python.org/3/library/typing.html#typing.ParamSpec) (3.10)
-  and [`typing.get_annotations()`](get_annotations)  (3.10)
-* [x] Clean decorator design with the [decorator](https://github.com/micheles/decorator) package
-* [x] Project management with [Poetry](https://python-poetry.org/)
-* [x] Clean code (opinionated), commented code, type annotations and unit tests ([pytest](https://docs.pytest.org/en/6.2.x/)). Open for criticism.
-* [x] Leveraging logging facilities
-* [x] Sensible exceptions
-* [x] Good documentation (ok, only half a check)
-* [ ] GitHub Actions
-* [ ] Sphinx documentation
 
 If you think it's cool, please leave a star. And who knows, it might actually be useful.
 
@@ -223,8 +171,8 @@ dependency injection.
   ```
 
 * [icontract](https://github.com/Parquery/icontract) and [deal](https://github.com/life4/deal):
-  Rely on conditions defined as lambdas much like this Project. However, their codebase is less
-  lean and the lack of variable definitions make it appear less intuitive to use.
+  Rely on conditions defined as lambdas much like this Project. They don't use the `Annotated` syntax
+  and their codebases are significantly larger.
 
 ## Contributions
 
@@ -232,7 +180,7 @@ Pull requests are welcome!
 
 ## Changelog
 
-* v0.2 (TBP): add Postconditions
+* v0.2 (2022-03-05): Simple symbolic support
 * v0.1.1 (2022-01-30): Better documentation
 * v0.1.0 (2022-01-29): Initial release
 
