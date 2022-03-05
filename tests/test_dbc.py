@@ -2,138 +2,162 @@ from inspect import signature
 from typing import Annotated
 
 import numpy as np
+import pandas as pd
 import pytest
-from design_by_contract import contract
-
-array1 = np.array([[4, 5, 6, 8]])
-array2 = np.array([[1, 2, 3]])
+from design_by_contract import contract, ContractViolationError, ContractLogicError
 
 
-def test_unkown_argument():
+class TestNumpy:
+    def test_matmult_correct(self):
+        @contract
+        def spam(
+            a: Annotated[np.ndarray, lambda a, m, n: (m, n) == a.shape],
+            b: Annotated[np.ndarray, lambda b, n, o: (n, o) == b.shape],
+        ) -> Annotated[np.ndarray, lambda x, m, o: x.shape == (m, o)]:
+            return a @ b
 
-    # c is not an argument
-    @contract(m=lambda c: c.shape[0])
-    def spam(a: np.ndarray, b: Annotated[np.ndarray, lambda b, m: b.shape == (m, 3)]):
-        pass
+        spam(np.zeros((3, 2)), np.zeros((2, 4)))
 
-    with pytest.raises(ValueError) as exc_info:
-        spam(b=array2, a=array1)
+    def test_matmult_correct_shortcut(self):
+        @contract
+        def spam(
+            a: Annotated[np.ndarray, lambda x, m, n: (m, n) == x.shape],
+            b: Annotated[np.ndarray, lambda x, n, o: (n, o) == x.shape],
+        ) -> Annotated[np.ndarray, lambda x, m, o: x.shape == (m, o)]:
+            return a @ b
 
-    assert str(exc_info.value) == ("Unkown argument names `{'c'}`")
+        spam(np.zeros((3, 2)), np.zeros((2, 4)))
+
+    def test_matmult_violated_in_return(self):
+        @contract
+        def spam(
+            a: Annotated[np.ndarray, lambda x, m, n: (m, n) == x.shape],
+            b: Annotated[np.ndarray, lambda x, n, o: (n, o) == x.shape],
+        ) -> Annotated[np.ndarray, lambda x, m, n: x.shape == (m, n)]:
+            return a @ b
+
+        with pytest.raises(ContractViolationError) as exc_info:
+            spam(np.zeros((3, 2)), np.zeros((2, 4)))
+
+        assert str(exc_info.value) == ("Contract violated for argument: `return`")
+
+    def test_matmult_violated_in_argument(self):
+        @contract
+        def spam(
+            a: Annotated[np.ndarray, lambda x, m, n: (m, n) == x.shape],
+            b: Annotated[np.ndarray, lambda x, n, o: (n, o) == x.shape],
+        ) -> Annotated[np.ndarray, lambda x, m, n: x.shape == (m, n)]:
+            return a @ b
+
+        with pytest.raises(ContractViolationError) as exc_info:
+            spam(np.zeros((3, 2)), np.zeros((3, 4)))
+
+        assert str(exc_info.value) == ("Contract violated for argument: `b`")
+
+    def test_matmult_unresolved(self):
+        @contract
+        def spam(
+            a: Annotated[np.ndarray, lambda x, m, n: (m, n) == x.shape and m > 2],
+            b: Annotated[np.ndarray, lambda x, n, o: (n, o) == x.shape],
+        ) -> Annotated[np.ndarray, lambda x, m, o: x.shape == (m, o)]:
+            return a @ b
+
+        with pytest.raises(TypeError) as exc_info:
+            spam(np.zeros((3, 2)), np.zeros((2, 4)))
+
+        assert str(exc_info.value) == ("'>' not supported between instances of 'UnresolvedSymbol' and 'int'")
+
+    def test_matmult_multi(self):
+        @contract
+        def spam(
+            a: Annotated[np.ndarray, lambda x, m, n: (m, n) == x.shape, lambda x: x.shape[1] == 2],
+            b: Annotated[np.ndarray, lambda x, n, o: (n, o) == x.shape],
+        ) -> Annotated[np.ndarray, lambda x, m, o: x.shape == (m, o)]:
+            return a @ b
+
+        spam(np.zeros((3, 2)), np.zeros((2, 4)))
+
+    def test_matmult_mixed(self):
+        @contract
+        def spam(
+            a: Annotated[np.ndarray, lambda x, m, n: (m, n) == x.shape and x.shape[1] == 2],
+            b: Annotated[np.ndarray, lambda x, n, o: (n, o) == x.shape],
+        ) -> Annotated[np.ndarray, lambda x, m, o: x.shape == (m, o)]:
+            return a @ b
+
+        spam(np.zeros((3, 2)), np.zeros((2, 4)))
+
+    def test_matmult_mixed_2(self):
+        @contract
+        def spam(
+            a: Annotated[np.ndarray, lambda x, n: (3, n) == x.shape],
+            b: Annotated[np.ndarray, lambda x, n, o: (n, o) == x.shape],
+        ) -> Annotated[np.ndarray, lambda x, o: x.shape == (3, o)]:
+            return a @ b
+
+        spam(np.zeros((3, 2)), np.zeros((2, 4)))
+
+    def test_matmult_mixed_violated(self):
+        @contract
+        def spam(
+            a: Annotated[np.ndarray, lambda x, n: (4, n) == x.shape],
+            b: Annotated[np.ndarray, lambda x, n, o: (n, o) == x.shape],
+        ) -> Annotated[np.ndarray, lambda x, o: x.shape == (3, o)]:
+            return a @ b
+
+        # Here we would expect a contract violation
+        # However, n==shape[1] will not be evaluated so the unresolved
+        # error is raised first
+
+        with pytest.raises(ContractViolationError) as exc_info:
+            spam(np.zeros((3, 2)), np.zeros((2, 4)))
+
+        assert str(exc_info.value) == ("Contract violated for argument: `a`")
 
 
-def test_unresolved_injection():
+class TestGeneral:
+    def test_docstring(self):
+        @contract
+        def spam(a: np.ndarray, b: Annotated[np.ndarray, lambda b, m: b.shape == (m, 3)]):
+            """A spam function"""
+            pass
 
-    # n cannot be resolved
-    @contract(m=lambda a: a.shape[0])
-    def spam(
-        a: np.ndarray, b: Annotated[np.ndarray, lambda b, m, n: b.shape == (m, n)]
-    ):
-        pass
+        assert spam.__doc__ == "A spam function"
 
-    with pytest.raises(ValueError) as exc_info:
-        spam(b=array2, a=array1)
-        print(exc_info)
+    def test_signature(self):
+        @contract
+        def spam(a: np.ndarray, b: Annotated[np.ndarray, lambda b, m: b.shape == (m, 3)]):
+            pass
 
-    assert str(exc_info.value) == ("Cannot inject `{'n'}` for argument `b`")
-
-
-def test_noncallable():
-    @contract(m=1)
-    def spam(
-        a: np.ndarray, b: Annotated[np.ndarray, lambda b, m, n: b.shape == (m, n)]
-    ):
-        pass
-
-    with pytest.raises(ValueError) as exc_info:
-        spam(b=array2, a=array1)
-
-    assert str(exc_info.value) == ("Expected callable for dependency `m`")
+        assert "(a: numpy.ndarray, b: typing.Annotated[numpy.ndarray," in str(signature(spam))
 
 
-def test_contract_violation():
-    @contract(m=lambda a: a.shape[0])
-    def spam(a: np.ndarray, b: Annotated[np.ndarray, lambda b, m: b.shape == (m, 3)]):
-        pass
+class TestPandas:
+    def test_pandas_correct(self):
+        a = pd.DataFrame(np.random.randint(0, 2, size=(10, 3)), columns=list("ABC"))
+        b = pd.DataFrame(np.random.randint(0, 3, size=(10, 3)), columns=list("BCD"))
 
-    # contract violation
-    with pytest.raises(ValueError) as exc_info:
-        spam(a=array2, b=array1)
-    assert str(exc_info.value) == ("Contract violated for argument: `b`")
+        @contract
+        def spam(
+            a: Annotated[pd.DataFrame, lambda x, c: c == {"C", "B"}, lambda x, c: c.issubset(x.columns)],
+            b: Annotated[pd.DataFrame, lambda x, c: c <= set(x.columns)],
+        ) -> Annotated[pd.DataFrame, lambda x, c: c <= set(x.columns)]:
+            return pd.merge(a, b, on=["B", "C"])
 
+        spam(a, b)
 
-def test_correct_usage():
-    @contract(m=lambda a: a.shape[0])
-    def spam(a: np.ndarray, b: Annotated[np.ndarray, lambda b, m: b.shape == (m, 3)]):
-        pass
+    def test_pandas_violated_argument(self):
+        a = pd.DataFrame(np.random.randint(0, 2, size=(10, 3)), columns=list("ABC"))
+        b = pd.DataFrame(np.random.randint(0, 3, size=(10, 3)), columns=list("CDE"))
 
-    # independence of order and kw args
-    spam(array1, array2)
-    spam(a=array1, b=array2)
-    spam(b=array2, a=array1)
+        @contract
+        def spam(
+            a: Annotated[pd.DataFrame, lambda x, c: c == {"C", "B"}, lambda x, c: c.issubset(x.columns)],
+            b: Annotated[pd.DataFrame, lambda x, c: c <= set(x.columns)],
+        ) -> Annotated[pd.DataFrame, lambda x, c: c <= set(x.columns)]:
+            return pd.merge(a, b, on=["B", "C"])
 
-    # without variables, only argument injection
-    @contract()
-    def eggs(
-        a: np.ndarray, b: Annotated[np.ndarray, lambda b, a: b.shape[0] == a.shape[0]]
-    ):
-        pass
+        with pytest.raises(ContractViolationError) as exc_info:
+            spam(a, b)
 
-    eggs(b=array2, a=array1)
-
-
-def test_docstring():
-    @contract(m=lambda a: a.shape[0])
-    def spam(a: np.ndarray, b: Annotated[np.ndarray, lambda b, m: b.shape == (m, 3)]):
-        """A spam function"""
-        pass
-
-    assert spam.__doc__ == "A spam function"
-
-
-def test_signature():
-    @contract(m=lambda a: a.shape[0])
-    def spam(a: np.ndarray, b: Annotated[np.ndarray, lambda b, m: b.shape == (m, 3)]):
-        pass
-
-    assert "(a: numpy.ndarray, b: typing.Annotated[numpy.ndarray," in str(
-        signature(spam)
-    )
-
-
-def test_return():
-    @contract(m=lambda a: a.shape[0], post=lambda: None)
-    def spam(a: np.ndarray, b: Annotated[np.ndarray, lambda b, m: b.shape == (m, 3)]):
-        pass
-
-    with pytest.raises(NotImplementedError) as exc_info:
-        spam(b=array2, a=array1)
-    assert str(exc_info.value) == ("Checking return values not yet supported")
-
-
-def test_multiple_contracts():
-    @contract(m=lambda a: a.shape[0])
-    def spam(
-        a: np.ndarray,
-        b: Annotated[
-            np.ndarray, lambda b, m: b.shape[0] == m, lambda b: b.shape[1] == 3
-        ],
-    ):
-        pass
-
-    spam(b=array2, a=array1)
-
-    # make sure both conditions are evaluated:
-
-    @contract(m=lambda a: a.shape[0])
-    def spam2(
-        a: np.ndarray,
-        b: Annotated[
-            np.ndarray, lambda b, m: b.shape[0] == m, lambda b: b.shape[1] == 2
-        ],
-    ):
-        pass
-
-    with pytest.raises(ValueError) as exc_info:
-        spam2(a=array2, b=array1)
-    assert str(exc_info.value) == ("Contract violated for argument: `b`")
+        assert str(exc_info.value) == ("Contract violated for argument: `b`")
