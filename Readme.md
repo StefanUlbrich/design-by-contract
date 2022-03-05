@@ -21,7 +21,7 @@ pip install design-by-contract
 
 **Warning**
 
-This project started as a weekend project to learn recent additions to the language (`typing.Annotated` and `typing.ParamSpec`, the [walruss operator](), [pattern matching]() and others). This means also that this package and its documentation should be considered as **work in progress**.
+This project started as a weekend project to learn recent additions to the language (`typing.Annotated` and `typing.ParamSpec`, the [walrus operator](https://www.python.org/dev/peps/pep-0572/), [pattern matching](https://www.python.org/dev/peps/pep-0636/) and others). This means also that this package and its documentation should be considered as **work in progress**.
 You probably shouldn't use it in production yet! But if you do, let me know how it went. Please leave a star if you like this project!
 
 ## Application
@@ -80,7 +80,7 @@ spam(a, b) # raises: '>' not supported between instances of 'UnresolvedSymbol' a
 ```
 
 This design decision is arguably unclean but allows for elegant contract expressions and a very clean and compact implementation.
-Different approaches involving symbolic algebra packages like [sympy]() or parsing a syntax trees were considered but turned out
+Different approaches involving symbolic algebra packages like [sympy](https://www.sympy.org/en/index.html) or parsing a syntax trees were considered but turned out
 to be too complex to implement. The next best alternative is using a domain-specific language (DLS) as done in  the excellent
 [pycontracts](https://github.com/AndreaCensi/contracts) package, which
 actually inspired this project. By using python, calculus in the contract can be arbitrarily
