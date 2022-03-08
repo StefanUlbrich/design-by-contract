@@ -17,6 +17,12 @@ class ContractLogicError(Exception):
 
 @dataclass
 class UnresolvedSymbol:
+    """
+    Placeholder for unknown symbols in contracts.
+
+    Overrides the equality operator to behave like an
+    assignment.
+    """
     name: str
     value: Optional[Any] = None
 
@@ -42,19 +48,10 @@ class UnresolvedSymbol:
         return (self.value is not None)
 
 
-
-# def make_iterable(x: Any) -> Sequence:
-#     """Check if argument is a sequence and if not, return wrapped in a list."""
-#     try:
-#         _ = iter(x)
-#         return x
-#     except TypeError:
-#         return [x]
-
-
 P, R = ParamSpec("P"), TypeVar("R")
 
 
+#: Test
 @decorator
 def contract(
     func: Callable[P, R],
@@ -63,10 +60,19 @@ def contract(
     *args,
     **kw,
 ) -> R:
-    """The actual decorator for implementing design by contract.
-
-    Use :func:`contract` a factory that generates the actual decorator.
     """
+    A decorator for enabling design by contract using :class:`typing.Annotated`.
+
+    Define contract conditions as lambdas together with their type annotation.
+
+    Parameters
+    ----------
+    reserved : str, optional
+        This symbol gets always replaced by the current argument name, by default "x"
+    evaluate : bool, optional
+        If False, the contracts are not evaluated, by default True
+    """
+
 
     if not evaluate:
         return func(*args, **kw)

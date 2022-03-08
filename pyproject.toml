@@ -28,6 +28,8 @@ black = "^21.12b0"
 mypy = "^0.931"
 pytest = "^6.2.5"
 ipykernel = "^6.9.1"
+sphinx-book-theme = "^0.2.0"
+myst-parser = "^0.17.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

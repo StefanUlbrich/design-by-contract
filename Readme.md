@@ -54,6 +54,18 @@ def spam(
 
 Contracts are lamdbas with one argument named like the annotated argument. Alternatively, `x` can be used as a shortcut which means
 that you cannot use `x` as a function argument unless you choose another reserved (using the `reserved` argument `contractor` decorator).
+
+```python
+@contract(reserved='y')
+def spam(
+    first: Annotated[np.ndarray, lambda y, m, n: (m, n) == y.shape],
+    second: Annotated[np.ndarray, lambda y, n, o: (n, o) == y.shape],
+) -> Annotated[np.ndarray, lambda y, m, o: y.shape == (m, o)]:
+    """Matrix multiplication"""
+    return a @ b
+```
+
+
 Symbolic  calculus is supported to certain degree to make your life easier. The symbols `m`, `n` and `o` are defined in a way
 that
 
@@ -117,6 +129,8 @@ def spam(a: Annotated[pd.DataFrame,
 spam(a, b)
 ```
 
+Note that evaluation is not optimized. In production, you might consider disabling evaluation by passing
+`evaluate=False` as a parameter to the `contract` decorator.
 
 
 ## Features
@@ -126,17 +140,19 @@ spam(a, b)
   * [x] Preconditions written as lambda functions
   * [x] Additional symbols can be used to achieve compact contracts
   * [x] [Dependency injection](https://en.wikipedia.org/wiki/Dependency_injection) based on argument names
-  * [x] Postconditions
+  * [x] Pre- and Postconditions
 * [x] Encourages static typing
   * [x] Does not break your type checking & code completion (tested with [mypy](https://mypy.readthedocs.io/en/stable/) and [visual studio code](https://code.visualstudio.com/))
   * [x] Uses annotations for defining conditions
-  * [ ] Optional dynamic type checking (planned)
+  * [ ] Optional dynamic type checking
 * [x] Preserves your docstrings (thanks to [`decorator`](https://github.com/micheles/decorator)).
       Plays well with [Sphinx](https://www.sphinx-doc.org/en/master/)
 * [x] Small, clean (opinionated) code base
   * [x] Implementation in a single file with ~100 lines of code!
   * [x] Currently only one runtime dependency!
-* [ ] Speed. Well.. maybe it is fast, I haven't tested it yet
+  * [x] Documentation using [sphinx](https://www.sphinx-doc.org/en/master/), [myst](https://myst-parser.readthedocs.io/en/latest/index.html) and [sphinx book](https://sphinx-book-theme.readthedocs.io/en/stable/)
+  * [x] Tested with pytest
+* [ ] Speed. Well.. maybe. I haven't tested it yet.
 
 ## Why?
 
@@ -160,7 +176,7 @@ dependency injection.
   Originally inspired this project. Although it requires a domain specific language, it supports implicitly defining variables for array shapes (see below). This package tries to achieve
   a similar goal in pure Python but it requires a formal definition of variables.
 
-  ```ptyhon
+  ```python
   @contract
   @contract(a='list[ M ](type(x))',
             b='list[ N ](type(x))',
