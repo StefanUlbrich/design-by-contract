@@ -1,0 +1,513 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to design-by-contract &#8212; Design by contract 0.2 documentation</title>
+    
+  <link href="_static/css/theme.css" rel="stylesheet">
+  <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
+    
+  <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="#">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">Design by contract 0.2 documentation</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
+<div class="sbt-scroll-pixel-helper"></div>
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            <div class="topbar-left">
+                
+                <label class="nav-toggle-button" for="__navigation">
+                    <div class="visually-hidden">Toggle navigation</div>
+                    <i class="fas fa-bars"></i>
+                </label>
+                
+            </div>
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="_sources/index.md.txt"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.md</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+                onclick="printPdf(this)" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#application">
+   Application
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#features">
+   Features
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#why">
+   Why?
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#related-active-projects">
+   Related (active) projects.
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#contributions">
+   Contributions
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#changelog">
+   Changelog
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#license">
+   License
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#module-design_by_contract">
+   API
+  </a>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Welcome to design-by-contract</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#application">
+   Application
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#features">
+   Features
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#why">
+   Why?
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#related-active-projects">
+   Related (active) projects.
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#contributions">
+   Contributions
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#changelog">
+   Changelog
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#license">
+   License
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#module-design_by_contract">
+   API
+  </a>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            
+              <div>
+                
+  <div class="tex2jax_ignore mathjax_ignore section" id="welcome-to-design-by-contract">
+<h1>Welcome to <code class="docutils literal notranslate"><span class="pre">design-by-contract</span></code><a class="headerlink" href="#welcome-to-design-by-contract" title="Permalink to this headline">¶</a></h1>
+<p>A minimalistic decorator for the <a class="reference external" href="https://en.wikipedia.org/wiki/Design_by_contract">design by contract pattern</a>
+written in a just little more than 100 lines of modern Python 3.10 code (not counting documentation and logging).</p>
+<p>Contracts are useful to impose restrictions and constraints on function arguments in a way that</p>
+<ul class="simple">
+<li><p>reduces boilerplate for argument validation in the function body
+(no more if blocks that raise value errors),</p></li>
+<li><p>are exposed in the function signature, that is, they serve as a means of documentation
+that is always up-to-date,</p></li>
+<li><p>allow relations between arguments.</p></li>
+</ul>
+<p>Install with</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>pip install design-by-contract
+</pre></div>
+</div>
+<p><strong>Warning</strong></p>
+<p>This project started as a weekend project to learn recent additions to the language (<code class="docutils literal notranslate"><span class="pre">typing.Annotated</span></code> and <code class="docutils literal notranslate"><span class="pre">typing.ParamSpec</span></code>, the <a class="reference external" href="https://www.python.org/dev/peps/pep-0572/">walrus operator</a>, <a class="reference external" href="https://www.python.org/dev/peps/pep-0636/">pattern matching</a> and others). This means also that this package and its documentation should be considered as <strong>work in progress</strong>.
+You probably shouldn’t use it in production yet! But if you do, let me know how it went. Please leave a star if you like this project!</p>
+<div class="section" id="application">
+<h2>Application<a class="headerlink" href="#application" title="Permalink to this headline">¶</a></h2>
+<p>The decorator has been mainly designed with <a class="reference external" href="https://numpy.org">numpy arrays</a> and <a class="reference external" href="https://pandas.pydata.org/">pandas DataFrames</a>
+in mind but can be universally applied.
+Contracts are defined as lambda functions that are attached to the function arguments via the
+<a class="reference external" href="https://www.python.org/dev/peps/pep-0593/">new Annotated type</a> that allows adding additional information
+to the arguments’ and return value’s type hint. Arguments are inserted into the lambda via
+<a class="reference external" href="https://en.wikipedia.org/wiki/Dependency_injection">dependency injection</a> and working with
+symbols to increase readability is supported.</p>
+<p>Let’s look at an example for for matrix multiplication!</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Annotated</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">design_by_contract</span> <span class="kn">import</span> <span class="n">contract</span>
+
+<span class="nd">@contract</span>
+<span class="k">def</span> <span class="nf">spam</span><span class="p">(</span>
+    <span class="n">first</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">first</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">==</span> <span class="n">first</span><span class="o">.</span><span class="n">shape</span><span class="p">],</span> <span class="c1"># symbols m and n represent the shape of `a`</span>
+    <span class="n">second</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">second</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">o</span><span class="p">:</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span> <span class="o">==</span> <span class="n">second</span><span class="o">.</span><span class="n">shape</span><span class="p">],</span> <span class="c1"># `b` number of columns matches the number of rows of `a`</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">o</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">o</span><span class="p">)]:</span> <span class="c1"># `x` holds the return value. The shape of `x` must equal `x` times `o`</span>
+    <span class="sd">&quot;&quot;&quot;Matrix multiplication&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">@</span> <span class="n">b</span>
+</pre></div>
+</div>
+<p>Contracts are lamdbas with one argument named like the annotated argument. Alternatively, <code class="docutils literal notranslate"><span class="pre">x</span></code> can be used as a shortcut which means
+that you cannot use <code class="docutils literal notranslate"><span class="pre">x</span></code> as a function argument unless you choose another reserved (using the <code class="docutils literal notranslate"><span class="pre">reserved</span></code> argument <code class="docutils literal notranslate"><span class="pre">contractor</span></code> decorator).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@contract</span><span class="p">(</span><span class="n">reserved</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">spam</span><span class="p">(</span>
+    <span class="n">first</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">y</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">==</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">],</span>
+    <span class="n">second</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">y</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">o</span><span class="p">:</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span> <span class="o">==</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">y</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">o</span><span class="p">:</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">o</span><span class="p">)]:</span>
+    <span class="sd">&quot;&quot;&quot;Matrix multiplication&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">@</span> <span class="n">b</span>
+</pre></div>
+</div>
+<p>Symbolic  calculus is supported to certain degree to make your life easier. The symbols <code class="docutils literal notranslate"><span class="pre">m</span></code>, <code class="docutils literal notranslate"><span class="pre">n</span></code> and <code class="docutils literal notranslate"><span class="pre">o</span></code> are defined in a way
+that</p>
+<div class="math notranslate nohighlight">
+\[ \text spam: R^{m \times x} \times R^{n\times o} \rightarrow R^{m\times o} \]</div>
+<p>Note however, that this package does <strong>not</strong> intend to be a symbolic calculus package and therefore, there are some strong limitations.</p>
+<p>Python does not allow for assignments (<code class="docutils literal notranslate"><span class="pre">=</span></code>) in a lambda expression and therefore,
+the equality operator (<code class="docutils literal notranslate"><span class="pre">==</span></code>) is chosen to act a replacement. Unknown arguments are replaced under the hood by an instance of <code class="docutils literal notranslate"><span class="pre">UnresolvedSymbol</span></code>
+that overload this operator. As a consequence, each symbol, therefore has to be first appear in an equality before it can be used <em>in a different</em> lambda expression!</p>
+<p>The following example will raise an error for instance:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@contract</span>
+<span class="k">def</span> <span class="nf">spam</span><span class="p">(</span>
+    <span class="n">a</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">==</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span> <span class="ow">and</span> <span class="n">m</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">],</span> <span class="c1"># you cannot &quot;assign&quot; and use `m` in the same lambda</span>
+    <span class="c1">#  Annotated[np.ndarray, lambda x, m, n: (m, n) == x.shape, lambda x, m:  m &gt; 2] # this would work</span>
+    <span class="n">b</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">o</span><span class="p">:</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span> <span class="o">==</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">o</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">o</span><span class="p">)]:</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">@</span> <span class="n">b</span>
+
+<span class="n">spam</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="c1"># raises: &#39;&gt;&#39; not supported between instances of &#39;UnresolvedSymbol&#39; and &#39;int&#39;</span>
+</pre></div>
+</div>
+<p>This design decision is arguably unclean but allows for elegant contract expressions and a very clean and compact implementation.
+Different approaches involving symbolic algebra packages like <a class="reference external" href="https://www.sympy.org/en/index.html">sympy</a> or parsing a syntax trees were considered but turned out
+to be too complex to implement. The next best alternative is using a domain-specific language (DLS) as done in  the excellent
+<a class="reference external" href="https://github.com/AndreaCensi/contracts">pycontracts</a> package, which
+actually inspired this project. By using python, calculus in the contract can be arbitrarily
+complex without the need for extending the DSL (i.e., including python functions):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@contract</span>
+<span class="k">def</span> <span class="nf">spam</span><span class="p">(</span>
+    <span class="n">a</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">o</span><span class="p">:</span> <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span> <span class="o">==</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">],</span>
+    <span class="n">b</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">o</span><span class="p">:</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span> <span class="o">==</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">,</span><span class="n">o</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">m</span><span class="o">+</span><span class="n">n</span><span class="p">,</span> <span class="n">o</span><span class="p">)]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">))</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">))</span>
+<span class="n">spam</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>The decorator is also quite handy for being used with pandas data frames:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@contract</span>
+<span class="k">def</span> <span class="nf">spam</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+                      <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span> <span class="o">==</span> <span class="p">{</span><span class="s1">&#39;C&#39;</span><span class="p">,</span><span class="s1">&#39;B&#39;</span><span class="p">},</span> <span class="c1"># `x` or the argument name must be passed to the lambda</span>
+                      <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="c1"># Remember, we need to use two lambdas here!</span>
+                     <span class="p">],</span>
+         <span class="n">b</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+                      <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span> <span class="o">&lt;=</span> <span class="nb">set</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="c1"># equivalent to `issubset` but more elegant</span>
+                     <span class="p">]</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+                       <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span> <span class="o">&lt;=</span> <span class="nb">set</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">columns</span><span class="p">)]:</span>
+    <span class="sd">&quot;&quot;&quot;Matrix multiplication&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;B&#39;</span><span class="p">,</span><span class="s1">&#39;C&#39;</span><span class="p">])</span>
+
+<span class="n">spam</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that evaluation is not optimized. In production, you might consider disabling evaluation by passing
+<code class="docutils literal notranslate"><span class="pre">evaluate=False</span></code> as a parameter to the <code class="docutils literal notranslate"><span class="pre">contract</span></code> decorator.</p>
+</div>
+<div class="section" id="features">
+<h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
+<ul class="contains-task-list simple">
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> Simple to used design by contract. Does not require you to learn a domain specific language necessary.</p>
+<ul class="contains-task-list">
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> Uses python language features only. Some of them recently introduced (i.e., in Python 3.10)</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> Preconditions written as lambda functions</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> Additional symbols can be used to achieve compact contracts</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <a class="reference external" href="https://en.wikipedia.org/wiki/Dependency_injection">Dependency injection</a> based on argument names</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> Pre- and Postconditions</p></li>
+</ul>
+</li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> Encourages static typing</p>
+<ul class="contains-task-list">
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> Does not break your type checking &amp; code completion (tested with <a class="reference external" href="https://mypy.readthedocs.io/en/stable/">mypy</a> and <a class="reference external" href="https://code.visualstudio.com/">visual studio code</a>)</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> Uses annotations for defining conditions</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> Optional dynamic type checking</p></li>
+</ul>
+</li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> Preserves your docstrings (thanks to <a class="reference external" href="https://github.com/micheles/decorator"><code class="docutils literal notranslate"><span class="pre">decorator</span></code></a>).
+Plays well with <a class="reference external" href="https://www.sphinx-doc.org/en/master/">Sphinx</a></p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> Small, clean (opinionated) code base</p>
+<ul class="contains-task-list">
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> Implementation in a single file with ~100 lines of code!</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> Currently only one runtime dependency!</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> Documentation using <a class="reference external" href="https://www.sphinx-doc.org/en/master/">sphinx</a>, <a class="reference external" href="https://myst-parser.readthedocs.io/en/latest/index.html">myst</a> and <a class="reference external" href="https://sphinx-book-theme.readthedocs.io/en/stable/">sphinx book</a></p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> Tested with pytest</p></li>
+</ul>
+</li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> Speed. Well.. maybe. I haven’t tested it yet.</p></li>
+</ul>
+</div>
+<div class="section" id="why">
+<h2>Why?<a class="headerlink" href="#why" title="Permalink to this headline">¶</a></h2>
+<p>I had the idea a while ago when reading about <code class="docutils literal notranslate"><span class="pre">typing.Annotated</span></code> in the release notes of Python 3.9.
+Eventually, it turned out to be a nice, small Weekend project and a welcomed
+opportunity to experiment with novel features in Python 3.10.
+In addition, it has been a good exercise to practice several aspects of modern and clean Python development and eventually
+might serve as an example for new Python developers:</p>
+<p>If you think it’s cool, please leave a star. And who knows, it might actually be useful.</p>
+</div>
+<div class="section" id="related-active-projects">
+<h2>Related (active) projects.<a class="headerlink" href="#related-active-projects" title="Permalink to this headline">¶</a></h2>
+<p>It appears that the related (still active) projects have significantly larger code bases
+(include parsers for a domain-specific language, automated testing, etc.) but also try to achieve
+additional and wider goals (automated testing, pure functions, etc.). The main strength
+of this project, in my opinion, lies in its compact codebase and intuitiveness of the
+dependency injection.</p>
+<ul>
+<li><p><a class="reference external" href="https://github.com/AndreaCensi/contracts">PyContracts</a>.
+Originally inspired this project. Although it requires a domain specific language, it supports implicitly defining variables for array shapes (see below). This package tries to achieve
+a similar goal in pure Python but it requires a formal definition of variables.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@contract</span>
+<span class="nd">@contract</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="s1">&#39;list[ M ](type(x))&#39;</span><span class="p">,</span>
+          <span class="n">b</span><span class="o">=</span><span class="s1">&#39;list[ N ](type(x))&#39;</span><span class="p">,</span>
+          <span class="n">returns</span><span class="o">=</span><span class="s1">&#39;list[M+N](type(x))&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">my_cat_equal</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Concatenate two lists together. &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
+</pre></div>
+</div>
+</li>
+<li><p><a class="reference external" href="https://github.com/Parquery/icontract">icontract</a> and <a class="reference external" href="https://github.com/life4/deal">deal</a>:
+Rely on conditions defined as lambdas much like this Project. They don’t use the <code class="docutils literal notranslate"><span class="pre">Annotated</span></code> syntax
+and their codebases are significantly larger.</p></li>
+</ul>
+</div>
+<div class="section" id="contributions">
+<h2>Contributions<a class="headerlink" href="#contributions" title="Permalink to this headline">¶</a></h2>
+<p>Pull requests are welcome!</p>
+</div>
+<div class="section" id="changelog">
+<h2>Changelog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>v0.2 (2022-03-05): Simple symbolic support</p></li>
+<li><p>v0.1.1 (2022-01-30): Better documentation</p></li>
+<li><p>v0.1.0 (2022-01-29): Initial release</p></li>
+</ul>
+</div>
+<div class="section" id="license">
+<h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
+<p>MIT License, Copyright 2022 Stefan Ulbrich</p>
+</div>
+<div class="section" id="module-design_by_contract">
+<span id="api"></span><h2>API<a class="headerlink" href="#module-design_by_contract" title="Permalink to this headline">¶</a></h2>
+<dl class="py exception">
+<dt class="sig sig-object py" id="design_by_contract.ContractLogicError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">design_by_contract.</span></span><span class="sig-name descname"><span class="pre">ContractLogicError</span></span><a class="reference internal" href="_modules/design_by_contract.html#ContractLogicError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#design_by_contract.ContractLogicError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raised when there is a syntactical error</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="design_by_contract.ContractViolationError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">design_by_contract.</span></span><span class="sig-name descname"><span class="pre">ContractViolationError</span></span><a class="reference internal" href="_modules/design_by_contract.html#ContractViolationError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#design_by_contract.ContractViolationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raised when a contract is violated</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="design_by_contract.UnresolvedSymbol">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">design_by_contract.</span></span><span class="sig-name descname"><span class="pre">UnresolvedSymbol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/design_by_contract.html#UnresolvedSymbol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#design_by_contract.UnresolvedSymbol" title="Permalink to this definition">¶</a></dt>
+<dd><p>Placeholder for unknown symbols in contracts.</p>
+<p>Overrides the equality operator to behave like an
+assignment.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="design_by_contract.contract">
+<span class="sig-prename descclassname"><span class="pre">design_by_contract.</span></span><span class="sig-name descname"><span class="pre">contract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">P</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">design_by_contract.R</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reserved</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">design_by_contract.R</span></span></span><a class="headerlink" href="#design_by_contract.contract" title="Permalink to this definition">¶</a></dt>
+<dd><p>A decorator for enabling design by contract using <code class="xref py py-class docutils literal notranslate"><span class="pre">typing.Annotated</span></code>.</p>
+<p>Define contract conditions as lambdas together with their type annotation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>reserved</strong> (<em>str</em><em>, </em><em>optional</em>) – This symbol gets always replaced by the current argument name, by default “x”</p></li>
+<li><p><strong>evaluate</strong> (<em>bool</em><em>, </em><em>optional</em>) – If False, the contracts are not evaluated, by default True</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+              </div>
+              
+            
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            
+        </div>
+    </div>
+    <footer class="footer">
+  <p>
+    
+      By Stefan Ulbrich<br/>
+    
+        &copy; Copyright 2022, Stefan Ulbrich.<br/>
+  </p>
+</footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>
