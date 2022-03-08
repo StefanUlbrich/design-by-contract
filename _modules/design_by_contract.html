@@ -162,6 +162,7 @@
 <span class="sd">    Overrides the equality operator to behave like an</span>
 <span class="sd">    assignment.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -171,11 +172,15 @@
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="n">ContractViolationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Symbols `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">` and `</span><span class="si">{</span><span class="n">other</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">` undefined&quot;</span><span class="p">)</span>
                 <span class="n">other</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
-            <span class="k">case</span> <span class="n">UnresolvedSymbol</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+            <span class="k">case</span> <span class="n">UnresolvedSymbol</span><span class="p">(</span><span class="k">_</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">case</span> <span class="n">UnresolvedSymbol</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">ContractViolationError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Symbols `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">` and `</span><span class="si">{</span><span class="n">other</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">` do not match: `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">` != `</span><span class="si">{</span><span class="n">other</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">`&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Symbols `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">` and `</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` do not match: `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">` != `</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">`&quot;</span>
                 <span class="p">)</span>
-            <span class="k">case</span> <span class="n">value</span> <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">case</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">case</span> <span class="n">value</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">ContractViolationError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;Symbols `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">` and `</span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s2">` do not match: `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">` != `</span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s2">`&quot;</span>
                 <span class="p">)</span>
@@ -184,13 +189,12 @@
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span> <span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
 
 
 <span class="n">P</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="n">ParamSpec</span><span class="p">(</span><span class="s2">&quot;P&quot;</span><span class="p">),</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;R&quot;</span><span class="p">)</span>
 
 
-<span class="c1">#: Test</span>
 <span class="nd">@decorator</span>
 <span class="k">def</span> <span class="nf">contract</span><span class="p">(</span>
     <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">],</span>
@@ -211,7 +215,6 @@
 <span class="sd">    evaluate : bool, optional</span>
 <span class="sd">        If False, the contracts are not evaluated, by default True</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">evaluate</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
@@ -256,11 +259,11 @@
 
                                 <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;contract for `</span><span class="si">%s</span><span class="s2">`, unresolved: `</span><span class="si">%s</span><span class="s2">`, </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">arg_name</span><span class="p">,</span> <span class="n">unresolved</span><span class="p">,</span> <span class="n">symbols</span><span class="p">)</span>
 
-                                <span class="k">if</span>  <span class="ow">not</span> <span class="n">meta</span><span class="p">(</span><span class="o">*</span><span class="p">[(</span><span class="n">symbols</span> <span class="o">|</span> <span class="n">injectables</span><span class="p">)[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">meta_args</span><span class="p">]):</span>
+                                <span class="k">if</span> <span class="ow">not</span> <span class="n">meta</span><span class="p">(</span><span class="o">*</span><span class="p">[(</span><span class="n">symbols</span> <span class="o">|</span> <span class="n">injectables</span><span class="p">)[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">meta_args</span><span class="p">]):</span>
                                     <span class="k">raise</span> <span class="n">ContractViolationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Contract violated for argument: `</span><span class="si">{</span><span class="n">arg_name</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
 
                                 <span class="k">if</span> <span class="nb">any</span><span class="p">([</span><span class="n">i</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">symbols</span><span class="o">.</span><span class="n">values</span><span class="p">()]):</span>
-                                    <span class="k">raise</span> <span class="n">ContractLogicError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Not all symbols were resolved `%s`&quot;</span><span class="p">,</span> <span class="n">symbols</span><span class="p">)</span>
+                                    <span class="k">raise</span> <span class="n">ContractLogicError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Not all symbols were resolved `</span><span class="si">{</span><span class="n">symbols</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span> <span class="p">)</span>
 
                                 <span class="n">injectables</span> <span class="o">|=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">symbols</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
@@ -285,6 +288,7 @@
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># pylint: disable=invalid-name, missing-function-docstring</span>
     <span class="c1"># Example</span>
     <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
