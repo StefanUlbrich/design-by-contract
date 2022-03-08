@@ -23,6 +23,7 @@ class UnresolvedSymbol:
     Overrides the equality operator to behave like an
     assignment.
     """
+
     name: str
     value: Optional[Any] = None
 
@@ -32,11 +33,15 @@ class UnresolvedSymbol:
                 if self.value is None:
                     raise ContractViolationError(f"Symbols `{self.name}` and `{other.name}` undefined")
                 other.value = self.value
-            case UnresolvedSymbol(value) if value != self.value:
+            case UnresolvedSymbol(_, value) if self.value is None:
+                self.value = value
+            case UnresolvedSymbol(name, value) if value != self.value:
                 raise ContractViolationError(
-                    f"Symbols `{self.name}` and `{other.name}` do not match: `{self.value}` != `{other.value}`"
+                    f"Symbols `{self.name}` and `{name}` do not match: `{self.value}` != `{value}`"
                 )
-            case value if value != value:
+            case self.value:
+                return True
+            case value if self.value is not None:
                 raise ContractViolationError(
                     f"Symbols `{self.name}` and `{other}` do not match: `{self.value}` != `{other}`"
                 )
@@ -45,13 +50,12 @@ class UnresolvedSymbol:
         return self
 
     def __bool__(self) -> bool:
-        return (self.value is not None)
+        return self.value is not None
 
 
 P, R = ParamSpec("P"), TypeVar("R")
 
 
-#: Test
 @decorator
 def contract(
     func: Callable[P, R],
@@ -72,7 +76,6 @@ def contract(
     evaluate : bool, optional
         If False, the contracts are not evaluated, by default True
     """
-
 
     if not evaluate:
         return func(*args, **kw)
@@ -117,11 +120,11 @@ def contract(
 
                                 logger.debug("contract for `%s`, unresolved: `%s`, %s", arg_name, unresolved, symbols)
 
-                                if  not meta(*[(symbols | injectables)[i] for i in meta_args]):
+                                if not meta(*[(symbols | injectables)[i] for i in meta_args]):
                                     raise ContractViolationError(f"Contract violated for argument: `{arg_name}`")
 
                                 if any([i.value is None for i in symbols.values()]):
-                                    raise ContractLogicError(f"Not all symbols were resolved `%s`", symbols)
+                                    raise ContractLogicError(f"Not all symbols were resolved `{symbols}`", )
 
                                 injectables |= {k: v.value for k, v in symbols.items()}
 
@@ -146,6 +149,7 @@ def contract(
 
 
 if __name__ == "__main__":
+    # pylint: disable=invalid-name, missing-function-docstring
     # Example
     import numpy as np
 

@@ -4,9 +4,9 @@ from typing import Annotated
 import numpy as np
 import pandas as pd
 import pytest
-from design_by_contract import contract, ContractViolationError, ContractLogicError
+from design_by_contract import contract, ContractViolationError, ContractLogicError, UnresolvedSymbol
 
-
+# pylint: skip-file
 class TestNumpy:
     def test_matmult_correct(self):
         @contract
@@ -115,15 +115,16 @@ class TestNumpy:
         assert str(exc_info.value) == ("Contract violated for argument: `a`")
 
     def test_vstack(self):
-
         @contract
         def spam(
             a: Annotated[np.ndarray, lambda x, m, o: (m, o) == x.shape],
             b: Annotated[np.ndarray, lambda x, n, o: (n, o) == x.shape],
-        ) -> Annotated[np.ndarray, lambda x, m,n,o: x.shape == (m+n, o)]:
-            print(np.vstack((a,b)).shape)
-            return np.vstack((a,b))
-        spam(np.zeros((3, 2)), np.zeros(( 4, 2)))
+        ) -> Annotated[np.ndarray, lambda x, m, n, o: x.shape == (m + n, o)]:
+            print(np.vstack((a, b)).shape)
+            return np.vstack((a, b))
+
+        spam(np.zeros((3, 2)), np.zeros((4, 2)))
+
 
 class TestGeneral:
     def test_docstring(self):
@@ -140,6 +141,50 @@ class TestGeneral:
             pass
 
         assert "(a: numpy.ndarray, b: typing.Annotated[numpy.ndarray," in str(signature(spam))
+
+    def test_reserved(self):
+        @contract(reserved="y")
+        def spam(
+            a: Annotated[np.ndarray, lambda y, m, n: (m, n) == y.shape],
+            b: Annotated[np.ndarray, lambda y, n, o: (n, o) == y.shape],
+        ) -> Annotated[np.ndarray, lambda y, m, o: y.shape == (m, o)]:
+
+            return a @ b
+
+    def test_match(self):
+        a, b = UnresolvedSymbol("a"), UnresolvedSymbol("b")
+        a == 2
+        b == a
+        assert a.value == b.value
+
+    def test_match_fail(self):
+        a, b = UnresolvedSymbol("a"), UnresolvedSymbol("b")
+        a == 2
+        b == 1
+        with pytest.raises(ContractViolationError) as exc_info:
+            a == b
+
+    def test_match_symmetry(self):
+        a, b = UnresolvedSymbol("a"), UnresolvedSymbol("b")
+        a == 2
+        assert a.value == 2
+
+        b = UnresolvedSymbol("a")
+        2 == b
+        assert b.value == 2
+
+    def test_match_fail2(self):
+        a = UnresolvedSymbol("a")
+        a == 2
+
+        with pytest.raises(ContractViolationError) as exc_info:
+            a == 3
+
+        with pytest.raises(ContractViolationError) as exc_info:
+            3 == a
+
+        a == 2
+        2 == a
 
 
 class TestPandas:

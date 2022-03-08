@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "design-by-contract"
-version = "0.2"
+version = "0.2.1"
 description = "Handy decorator to define contracts with dependency injection in Python 3.10 and above"
 authors = ["Stefan Ulbrich"]
 license = "MIT"
