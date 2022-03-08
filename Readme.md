@@ -3,8 +3,6 @@
 A minimalistic decorator for the [design by contract pattern](https://en.wikipedia.org/wiki/Design_by_contract)
 written in a just little more than 100 lines of modern Python 3.10 code (not counting documentation and logging).
 
-
-
 Contracts are useful to impose restrictions and constraints on function arguments in a way that
 
 * reduces boilerplate for argument validation in the function body
@@ -26,7 +24,6 @@ You probably shouldn't use it in production yet! But if you do, let me know how 
 
 ## Application
 
-
 The decorator has been mainly designed with [numpy arrays](https://numpy.org) and [pandas DataFrames](https://pandas.pydata.org/)
 in mind but can be universally applied.
 Contracts are defined as lambda functions that are attached to the function arguments via the
@@ -34,7 +31,6 @@ Contracts are defined as lambda functions that are attached to the function argu
 to the arguments' and return value's type hint. Arguments are inserted into the lambda via
 [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection) and working with
 symbols to increase readability is supported.
-
 
 Let's look at an example for for matrix multiplication!
 
@@ -64,7 +60,6 @@ def spam(
     """Matrix multiplication"""
     return a @ b
 ```
-
 
 Symbolic  calculus is supported to certain degree to make your life easier. The symbols `m`, `n` and `o` are defined in a way
 that
@@ -111,7 +106,6 @@ spam(np.zeros((3, 2)), np.zeros(( 4, 2)))
 
 The decorator is also quite handy for being used with pandas data frames:
 
-
 ```python
 @contract
 def spam(a: Annotated[pd.DataFrame,
@@ -132,7 +126,6 @@ spam(a, b)
 Note that evaluation is not optimized. In production, you might consider disabling evaluation by passing
 `evaluate=False` as a parameter to the `contract` decorator.
 
-
 ## Features
 
 * [x] Simple to used design by contract. Does not require you to learn a domain specific language necessary.
@@ -152,6 +145,8 @@ Note that evaluation is not optimized. In production, you might consider disabli
   * [x] Currently only one runtime dependency!
   * [x] Documentation using [sphinx](https://www.sphinx-doc.org/en/master/), [myst](https://myst-parser.readthedocs.io/en/latest/index.html) and [sphinx book](https://sphinx-book-theme.readthedocs.io/en/stable/)
   * [x] Tested with pytest
+  * [x] Type annotations
+  * [x] code formatted ([black](https://github.com/psf/black)), linted ([pylint](https://pylint.org/)). Linting with [mypy](http://www.mypy-lang.org/) does not support pattern matching yet.
 * [ ] Speed. Well.. maybe. I haven't tested it yet.
 
 ## Why?
@@ -164,7 +159,7 @@ might serve as an example for new Python developers:
 
 If you think it's cool, please leave a star. And who knows, it might actually be useful.
 
-## Related (active) projects.
+## Related (active) projects
 
 It appears that the related (still active) projects have significantly larger code bases
 (include parsers for a domain-specific language, automated testing, etc.) but also try to achieve
@@ -203,5 +198,3 @@ Pull requests are welcome!
 ## License
 
 MIT License, Copyright 2022 Stefan Ulbrich
-
-
