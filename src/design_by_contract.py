@@ -1,7 +1,8 @@
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
 from inspect import get_annotations, getfullargspec
-from typing import Annotated, Callable, Any, TypeVar, ParamSpec, Optional
+from typing import Annotated, Any, Callable, Optional, ParamSpec, TypeVar
+
 from decorator import decorator
 
 logger = logging.getLogger(__name__)
@@ -124,7 +125,9 @@ def contract(
                                     raise ContractViolationError(f"Contract violated for argument: `{arg_name}`")
 
                                 if any([i.value is None for i in symbols.values()]):
-                                    raise ContractLogicError(f"Not all symbols were resolved `{symbols}`", )
+                                    raise ContractLogicError(
+                                        f"Not all symbols were resolved `{symbols}`",
+                                    )
 
                                 injectables |= {k: v.value for k, v in symbols.items()}
 

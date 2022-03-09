@@ -147,6 +147,9 @@ Note that evaluation is not optimized. In production, you might consider disabli
   * [x] Tested with pytest
   * [x] Type annotations
   * [x] code formatted ([black](https://github.com/psf/black)), linted ([pylint](https://pylint.org/)). Linting with [mypy](http://www.mypy-lang.org/) does not support pattern matching yet.
+  * [x] GitHub action for GitHub pages
+  * [ ] GitHub action for linting and formatting
+  * [x] Precommit for linting and formatting
 * [ ] Speed. Well.. maybe. I haven't tested it yet.
 
 ## Why?

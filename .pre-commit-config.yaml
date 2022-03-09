@@ -1,0 +1,51 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+# where are the environments stored https://stackoverflow.com/a/62539529
+# inspired by https://github.com/pronovic/apologies
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+    -   id: trailing-whitespace
+        files:  '.*\.(py|rst|json|yaml)'
+    -   id: end-of-file-fixer
+        files:  '.*\.(py|rst|json|yaml)'
+    -   id: check-yaml
+    -   id: check-added-large-files
+-   repo: local
+    hooks:
+      - id: system
+        name: Black
+        entry: poetry run black src tests
+        pass_filenames: false
+        language: system
+-   repo: local
+    hooks:
+      - id: system
+        name: isort
+        entry: poetry run isort src --profile black
+        pass_filenames: false
+        language: system
+# -   repo: local
+#     hooks:
+#       - id: system
+#         name: Safety
+#         entry: poetry run safety check
+#         pass_filenames: false
+#         language: system
+
+# Disabled until mypy support structural pattern matching
+# -   repo: local
+#     hooks:
+#       - id: system
+#         name: MyPy
+#         entry: poetry run mypy -p design_by_contract
+#         pass_filenames: false
+#         language: system
+-   repo: local
+    hooks:
+      - id: system
+        name: Pylint
+        entry: poetry run pylint -j0 design_by_contract --disable=R,C,W
+        pass_filenames: false
+        language: system
