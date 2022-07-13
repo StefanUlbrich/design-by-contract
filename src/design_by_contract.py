@@ -88,7 +88,7 @@ def contract(
         raise ValueError(f"Argument cannot be the reserved identifier `{reserved}`")
 
     # Resolved function arguments passed to func
-    injectables = {k: v for k, v in zip(annotations.keys(), args)}
+    injectables = dict(zip(annotations.keys(), args))
     logger.debug("injectables: %s", injectables)
 
     def evaluate_annotations(annotations: dict[str, Any]) -> None:
