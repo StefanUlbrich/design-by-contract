@@ -25,7 +25,7 @@ class UnresolvedSymbol:
     assignment.
     """
 
-    name: str
+    name: Optional[str]
     value: Optional[Any] = None
 
     def __eq__(self, other: Any) -> "UnresolvedSymbol":
