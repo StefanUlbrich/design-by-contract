@@ -100,7 +100,7 @@ def contract(
             if hasattr(annotation, "__metadata__"):
                 for meta in annotation.__metadata__:
                     # Only consider lambdas/callables
-                    if isinstance(meta, Callable):  # type: ignore
+                    if callable(meta):
                         meta_args = getfullargspec(meta).args
                         # Only if the original argument's name is among its argument names
                         # TODO we shold remove that
