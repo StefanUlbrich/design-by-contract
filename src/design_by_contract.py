@@ -62,8 +62,8 @@ def contract(
     func: Callable[P, R],
     reserved: str = "x",
     evaluate: bool = True,
-    *args,
-    **kw,
+    *args: Any,
+    **kw: Any,
 ) -> R:
     """
     A decorator for enabling design by contract using :class:`typing.Annotated`.
