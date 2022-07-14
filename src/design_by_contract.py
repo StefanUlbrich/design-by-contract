@@ -54,7 +54,8 @@ class UnresolvedSymbol:
         return self.value is not None
 
 
-P, R = ParamSpec("P"), TypeVar("R")
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 @decorator
