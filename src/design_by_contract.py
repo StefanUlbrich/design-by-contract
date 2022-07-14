@@ -138,7 +138,7 @@ def contract(
                                 if not meta(*(_args := [injectables[i] for i in meta_args])):
                                     raise ContractViolationError(f"Contract violated for argument: `{arg_name}`")
 
-                            logger.debug("Contract fullfilled for argument `%s`", arg_name)
+                            logger.debug("Contract fulfilled for argument `%s`", arg_name)
 
     evaluate_annotations(annotations)
 
