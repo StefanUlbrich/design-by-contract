@@ -83,7 +83,7 @@ def contract(
         return func(*args, **kw)
 
     annotations = get_annotations(func)
-    return_annotation = annotations.pop("return") if "return" in annotations else None
+    return_annotation = annotations.pop("return", None)
 
     if reserved in annotations.keys():
         raise ValueError(f"Argument cannot be the reserved identifier `{reserved}`")
