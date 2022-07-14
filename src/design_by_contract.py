@@ -28,7 +28,7 @@ class UnresolvedSymbol:
     name: Optional[str]
     value: Optional[Any] = None
 
-    def __eq__(self, other: Any) -> "UnresolvedSymbol":
+    def __eq__(self, other: Any) -> "UnresolvedSymbol":  # type: ignore[override]
         match other:
             case UnresolvedSymbol(None):
                 if self.value is None:
