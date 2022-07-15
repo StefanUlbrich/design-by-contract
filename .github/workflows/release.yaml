@@ -1,0 +1,27 @@
+name: Publish release
+on:
+  release:
+    types: [published]
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-python@v3
+      with:
+        python-version: 3.10.2
+    - name: Poetry
+      uses: abatilo/actions-poetry@v2.1.5
+      with:
+        poetry-version: 1.1.13
+    - name: Installation
+      run: poetry install
+    - name: Upload
+      env:
+        PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: poetry publish --build --username $PYPI_USERNAME --password $PYPI_PASSWORD
