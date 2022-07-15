@@ -293,7 +293,7 @@ symbols to increase readability is supported.</p>
     <span class="k">return</span> <span class="n">a</span> <span class="o">@</span> <span class="n">b</span>
 </pre></div>
 </div>
-<p>Contracts are lamdbas with one argument named like the annotated argument. Alternatively, <code class="docutils literal notranslate"><span class="pre">x</span></code> can be used as a shortcut which means
+<p>Contracts are lambdas with one argument named like the annotated argument. Alternatively, <code class="docutils literal notranslate"><span class="pre">x</span></code> can be used as a shortcut which means
 that you cannot use <code class="docutils literal notranslate"><span class="pre">x</span></code> as a function argument unless you choose another reserved (using the <code class="docutils literal notranslate"><span class="pre">reserved</span></code> argument <code class="docutils literal notranslate"><span class="pre">contractor</span></code> decorator).</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@contract</span><span class="p">(</span><span class="n">reserved</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">spam</span><span class="p">(</span>
