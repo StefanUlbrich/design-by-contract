@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 from inspect import get_annotations, getfullargspec
-from typing import Annotated, Any, Callable, Optional, ParamSpec, TypeVar
+from typing import Annotated, Any, Callable, Optional, ParamSpec, TypeVar, Union
 
 from decorator import decorator
 
@@ -28,7 +28,7 @@ class UnresolvedSymbol:
     name: Optional[str]
     value: Optional[Any] = None
 
-    def __eq__(self, other: Any) -> "UnresolvedSymbol":  # type: ignore[override]
+    def __eq__(self, other: Any) -> Union["UnresolvedSymbol", bool]:  # type: ignore[override]
         match other:
             case UnresolvedSymbol(None):
                 if self.value is None:
