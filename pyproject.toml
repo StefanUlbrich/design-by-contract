@@ -44,6 +44,10 @@ mypy_path = "src"
 show_error_codes = true
 strict = true
 
+[tool.isort]
+# https://pycqa.github.io/isort/docs/configuration/black_compatibility.html
+profile = "black"
+
 [[tool.mypy.overrides]]
 module = "decorator.*"
 ignore_missing_imports = true
