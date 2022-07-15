@@ -33,15 +33,13 @@ repos:
 #         entry: poetry run safety check
 #         pass_filenames: false
 #         language: system
-
-# Disabled until mypy support structural pattern matching
-# -   repo: local
-#     hooks:
-#       - id: system
-#         name: MyPy
-#         entry: poetry run mypy -p design_by_contract
-#         pass_filenames: false
-#         language: system
+-   repo: local
+    hooks:
+      - id: system
+        name: MyPy
+        entry: poetry run mypy -p design_by_contract
+        pass_filenames: false
+        language: system
 -   repo: local
     hooks:
       - id: system
