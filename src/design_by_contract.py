@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 from inspect import get_annotations, getfullargspec
-from typing import Annotated, Any, Callable, Optional, ParamSpec, TypeVar
+from typing import Annotated, Any, Callable, Optional, ParamSpec, TypeVar, Union
 
 from decorator import decorator
 
@@ -25,10 +25,10 @@ class UnresolvedSymbol:
     assignment.
     """
 
-    name: str
+    name: Optional[str]
     value: Optional[Any] = None
 
-    def __eq__(self, other: Any) -> "UnresolvedSymbol":
+    def __eq__(self, other: Any) -> Union["UnresolvedSymbol", bool]:  # type: ignore[override]
         match other:
             case UnresolvedSymbol(None):
                 if self.value is None:
@@ -54,7 +54,8 @@ class UnresolvedSymbol:
         return self.value is not None
 
 
-P, R = ParamSpec("P"), TypeVar("R")
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 @decorator
@@ -62,8 +63,8 @@ def contract(
     func: Callable[P, R],
     reserved: str = "x",
     evaluate: bool = True,
-    *args,
-    **kw,
+    *args: Any,
+    **kw: Any,
 ) -> R:
     """
     A decorator for enabling design by contract using :class:`typing.Annotated`.
@@ -82,13 +83,13 @@ def contract(
         return func(*args, **kw)
 
     annotations = get_annotations(func)
-    return_annotation = annotations.pop("return") if "return" in annotations else None
+    return_annotation = annotations.pop("return", None)
 
     if reserved in annotations.keys():
         raise ValueError(f"Argument cannot be the reserved identifier `{reserved}`")
 
     # Resolved function arguments passed to func
-    injectables = {k: v for k, v in zip(annotations.keys(), args)}
+    injectables = dict(zip(annotations.keys(), args))
     logger.debug("injectables: %s", injectables)
 
     def evaluate_annotations(annotations: dict[str, Any]) -> None:
@@ -99,7 +100,7 @@ def contract(
             if hasattr(annotation, "__metadata__"):
                 for meta in annotation.__metadata__:
                     # Only consider lambdas/callables
-                    if isinstance(meta, Callable):  # type: ignore
+                    if callable(meta):
                         meta_args = getfullargspec(meta).args
                         # Only if the original argument's name is among its argument names
                         # TODO we shold remove that
@@ -137,7 +138,7 @@ def contract(
                                 if not meta(*(_args := [injectables[i] for i in meta_args])):
                                     raise ContractViolationError(f"Contract violated for argument: `{arg_name}`")
 
-                            logger.debug("Contract fullfilled for argument `%s`", arg_name)
+                            logger.debug("Contract fulfilled for argument `%s`", arg_name)
 
     evaluate_annotations(annotations)
 
@@ -155,15 +156,16 @@ if __name__ == "__main__":
     # pylint: disable=invalid-name, missing-function-docstring
     # Example
     import numpy as np
+    from numpy.typing import NDArray
 
     logging.basicConfig(format="%(name)s %(levelname)s [%(funcName)s:%(lineno)d] %(message)s")
     logger.setLevel(logging.DEBUG)
 
     @contract
     def spam(
-        a: Annotated[np.ndarray, lambda x, m, n: (m, n) == x.shape],
-        b: Annotated[np.ndarray, lambda x, n, o: (n, o) == x.shape],
-    ) -> Annotated[np.ndarray, lambda x, m, o: x.shape == (m, o)]:
+        a: Annotated[NDArray[Any], lambda x, m, n: (m, n) == x.shape],
+        b: Annotated[NDArray[Any], lambda x, n, o: (n, o) == x.shape],
+    ) -> Annotated[NDArray[Any], lambda x, m, o: x.shape == (m, o)]:
         return a @ b
 
     spam(np.zeros((3, 2)), np.zeros((2, 4)))
