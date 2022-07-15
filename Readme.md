@@ -48,7 +48,7 @@ def spam(
     return a @ b
 ```
 
-Contracts are lamdbas with one argument named like the annotated argument. Alternatively, `x` can be used as a shortcut which means
+Contracts are lambdas with one argument named like the annotated argument. Alternatively, `x` can be used as a shortcut which means
 that you cannot use `x` as a function argument unless you choose another reserved (using the `reserved` argument `contractor` decorator).
 
 ```python
