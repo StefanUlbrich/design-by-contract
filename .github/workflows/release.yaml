@@ -22,6 +22,6 @@ jobs:
       run: poetry install
     - name: Upload
       env:
-        PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        PYPI_USERNAME: __token__
+        PYPI_PASSWORD: ${{ secrets.PYPI_TOKEN }}
       run: poetry publish --build --username $PYPI_USERNAME --password $PYPI_PASSWORD
