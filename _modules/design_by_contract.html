@@ -139,10 +139,18 @@
   <h1>Source code for design_by_contract</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">get_annotations</span><span class="p">,</span> <span class="n">getfullargspec</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">ParamSpec</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
-
-<span class="kn">from</span> <span class="nn">decorator</span> <span class="kn">import</span> <span class="n">decorator</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span><span class="p">,</span> <span class="n">wraps</span>
+<span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">get_annotations</span><span class="p">,</span> <span class="n">getfullargspec</span><span class="p">,</span> <span class="n">signature</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Annotated</span><span class="p">,</span>
+    <span class="n">Any</span><span class="p">,</span>
+    <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">Optional</span><span class="p">,</span>
+    <span class="n">ParamSpec</span><span class="p">,</span>
+    <span class="n">TypeVar</span><span class="p">,</span>
+    <span class="n">Union</span><span class="p">,</span>
+    <span class="n">overload</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -197,110 +205,134 @@
 <span class="n">R</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;R&quot;</span><span class="p">)</span>
 
 
-<span class="nd">@decorator</span>
-<span class="k">def</span> <span class="nf">contract</span><span class="p">(</span>
-    <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">],</span>
-    <span class="n">reserved</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span>
-    <span class="n">evaluate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kw</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">R</span><span class="p">:</span>
+<span class="nd">@overload</span>
+<span class="k">def</span> <span class="nf">contract</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]:</span>
+    <span class="o">...</span>
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span> <span class="nf">contract</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">reserved</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">evaluate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]]:</span>
+    <span class="o">...</span>
+
+
+<div class="viewcode-block" id="contract"><a class="viewcode-back" href="../index.html#design_by_contract.contract">[docs]</a><span class="k">def</span> <span class="nf">contract</span><span class="p">(</span>
+    <span class="n">func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">reserved</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">evaluate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]]:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A decorator for enabling design by contract using :class:`typing.Annotated`.</span>
 
 <span class="sd">    Define contract conditions as lambdas together with their type annotation.</span>
+<span class="sd">    The decorator is overloaded so you can call it eigher with `@contract` or</span>
+<span class="sd">    `@contract(...)` with our without arguments. Note that positional keywords</span>
+<span class="sd">    are not allowed (i.e., you need to use keyword arguments)</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    reserved : str, optional</span>
-<span class="sd">        This symbol gets always replaced by the current argument name, by default &quot;x&quot;</span>
+<span class="sd">        This symbol gets always replaced by the current argument name, by default &quot;x&quot;.</span>
+<span class="sd">        This is a keyword only argument.</span>
 <span class="sd">    evaluate : bool, optional</span>
-<span class="sd">        If False, the contracts are not evaluated, by default True</span>
+<span class="sd">        If False, the contracts are not evaluated, by default True.</span>
+<span class="sd">        This is a keyword only argument.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">evaluate</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">R</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The actual logic&quot;&quot;&quot;</span>
 
-    <span class="n">annotations</span> <span class="o">=</span> <span class="n">get_annotations</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
-    <span class="n">return_annotation</span> <span class="o">=</span> <span class="n">annotations</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;return&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">evaluate</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">reserved</span> <span class="ow">in</span> <span class="n">annotations</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Argument cannot be the reserved identifier `</span><span class="si">{</span><span class="n">reserved</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
+        <span class="n">annotations</span> <span class="o">=</span> <span class="n">get_annotations</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="n">return_annotation</span> <span class="o">=</span> <span class="n">annotations</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;return&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
-    <span class="c1"># Resolved function arguments passed to func</span>
-    <span class="n">injectables</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">annotations</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">args</span><span class="p">))</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;injectables: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">injectables</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">reserved</span> <span class="ow">in</span> <span class="n">annotations</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Argument cannot be the reserved identifier `</span><span class="si">{</span><span class="n">reserved</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">evaluate_annotations</span><span class="p">(</span><span class="n">annotations</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">nonlocal</span> <span class="n">injectables</span>
-        <span class="k">for</span> <span class="n">arg_name</span><span class="p">,</span> <span class="n">annotation</span> <span class="ow">in</span> <span class="n">annotations</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="c1"># Resolved function arguments passed to func</span>
+        <span class="n">injectables</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">annotations</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">args</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;injectables: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">injectables</span><span class="p">)</span>
 
-            <span class="c1"># Filter for typing.Annotation objects with extra annotations</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="s2">&quot;__metadata__&quot;</span><span class="p">):</span>
-                <span class="k">for</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">annotation</span><span class="o">.</span><span class="n">__metadata__</span><span class="p">:</span>
-                    <span class="c1"># Only consider lambdas/callables</span>
-                    <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">meta</span><span class="p">):</span>
-                        <span class="n">meta_args</span> <span class="o">=</span> <span class="n">getfullargspec</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span><span class="o">.</span><span class="n">args</span>
-                        <span class="c1"># Only if the original argument&#39;s name is among its argument names</span>
-                        <span class="c1"># TODO we shold remove that</span>
-                        <span class="k">if</span> <span class="n">arg_name</span> <span class="ow">in</span> <span class="n">meta_args</span> <span class="ow">or</span> <span class="n">reserved</span> <span class="ow">in</span> <span class="n">meta_args</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">evaluate_annotations</span><span class="p">(</span><span class="n">annotations</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">nonlocal</span> <span class="n">injectables</span>
+            <span class="k">for</span> <span class="n">arg_name</span><span class="p">,</span> <span class="n">annotation</span> <span class="ow">in</span> <span class="n">annotations</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
 
-                            <span class="c1"># the reserved identifier is a shortcut</span>
-                            <span class="n">injectables</span><span class="p">[</span><span class="n">reserved</span><span class="p">]</span> <span class="o">=</span> <span class="n">injectables</span><span class="p">[</span><span class="n">arg_name</span><span class="p">]</span>
-                            <span class="n">dependencies</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">injectables</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">meta_args</span><span class="p">)</span>
-                            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                                <span class="s2">&quot;contract for `</span><span class="si">%s</span><span class="s2">`, resolved: `</span><span class="si">%s</span><span class="s2">`&quot;</span><span class="p">,</span>
-                                <span class="n">arg_name</span><span class="p">,</span>
-                                <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">injectables</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">dependencies</span><span class="p">},</span>
-                            <span class="p">)</span>
+                <span class="c1"># Filter for typing.Annotation objects with extra annotations</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="s2">&quot;__metadata__&quot;</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">annotation</span><span class="o">.</span><span class="n">__metadata__</span><span class="p">:</span>
+                        <span class="c1"># Only consider lambdas/callables</span>
+                        <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">meta</span><span class="p">):</span>
+                            <span class="n">meta_args</span> <span class="o">=</span> <span class="n">getfullargspec</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span><span class="o">.</span><span class="n">args</span>
+                            <span class="c1"># Only if the original argument&#39;s name is among its argument names</span>
+                            <span class="c1"># TODO we shold remove that</span>
+                            <span class="k">if</span> <span class="n">arg_name</span> <span class="ow">in</span> <span class="n">meta_args</span> <span class="ow">or</span> <span class="n">reserved</span> <span class="ow">in</span> <span class="n">meta_args</span><span class="p">:</span>
 
-                            <span class="c1"># Look for arguments that cannot be injected</span>
-                            <span class="k">if</span> <span class="n">unresolved</span> <span class="o">:=</span> <span class="nb">set</span><span class="p">(</span><span class="n">meta_args</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">injectables</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                                <span class="c1"># the reserved identifier is a shortcut</span>
+                                <span class="n">injectables</span><span class="p">[</span><span class="n">reserved</span><span class="p">]</span> <span class="o">=</span> <span class="n">injectables</span><span class="p">[</span><span class="n">arg_name</span><span class="p">]</span>
+                                <span class="n">dependencies</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">injectables</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">meta_args</span><span class="p">)</span>
+                                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                                    <span class="s2">&quot;contract for `</span><span class="si">%s</span><span class="s2">`, resolved: `</span><span class="si">%s</span><span class="s2">`&quot;</span><span class="p">,</span>
+                                    <span class="n">arg_name</span><span class="p">,</span>
+                                    <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">injectables</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">dependencies</span><span class="p">},</span>
+                                <span class="p">)</span>
 
-                                <span class="n">symbols</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">UnresolvedSymbol</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">unresolved</span><span class="p">}</span>
+                                <span class="c1"># Look for arguments that cannot be injected</span>
+                                <span class="k">if</span> <span class="n">unresolved</span> <span class="o">:=</span> <span class="nb">set</span><span class="p">(</span><span class="n">meta_args</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">injectables</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
 
-                                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;contract for `</span><span class="si">%s</span><span class="s2">`, unresolved: `</span><span class="si">%s</span><span class="s2">`, </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">arg_name</span><span class="p">,</span> <span class="n">unresolved</span><span class="p">,</span> <span class="n">symbols</span><span class="p">)</span>
+                                    <span class="n">symbols</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">UnresolvedSymbol</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">unresolved</span><span class="p">}</span>
 
-                                <span class="k">if</span> <span class="ow">not</span> <span class="n">meta</span><span class="p">(</span><span class="o">*</span><span class="p">[(</span><span class="n">symbols</span> <span class="o">|</span> <span class="n">injectables</span><span class="p">)[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">meta_args</span><span class="p">]):</span>
-                                    <span class="k">raise</span> <span class="n">ContractViolationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Contract violated for argument: `</span><span class="si">{</span><span class="n">arg_name</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
-
-                                <span class="k">if</span> <span class="nb">any</span><span class="p">([</span><span class="n">i</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">symbols</span><span class="o">.</span><span class="n">values</span><span class="p">()]):</span>
-                                    <span class="k">raise</span> <span class="n">ContractLogicError</span><span class="p">(</span>
-                                        <span class="sa">f</span><span class="s2">&quot;Not all symbols were resolved `</span><span class="si">{</span><span class="n">symbols</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
+                                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                                        <span class="s2">&quot;contract for `</span><span class="si">%s</span><span class="s2">`, unresolved: `</span><span class="si">%s</span><span class="s2">`, </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">arg_name</span><span class="p">,</span> <span class="n">unresolved</span><span class="p">,</span> <span class="n">symbols</span>
                                     <span class="p">)</span>
 
-                                <span class="n">injectables</span> <span class="o">|=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">symbols</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+                                    <span class="k">if</span> <span class="ow">not</span> <span class="n">meta</span><span class="p">(</span><span class="o">*</span><span class="p">[(</span><span class="n">symbols</span> <span class="o">|</span> <span class="n">injectables</span><span class="p">)[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">meta_args</span><span class="p">]):</span>
+                                        <span class="k">raise</span> <span class="n">ContractViolationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Contract violated for argument: `</span><span class="si">{</span><span class="n">arg_name</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
 
-                            <span class="k">else</span><span class="p">:</span>
+                                    <span class="k">if</span> <span class="nb">any</span><span class="p">([</span><span class="n">i</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">symbols</span><span class="o">.</span><span class="n">values</span><span class="p">()]):</span>
+                                        <span class="k">raise</span> <span class="n">ContractLogicError</span><span class="p">(</span>
+                                            <span class="sa">f</span><span class="s2">&quot;Not all symbols were resolved `</span><span class="si">{</span><span class="n">symbols</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
+                                        <span class="p">)</span>
 
-                                <span class="c1"># Evaluate contract by injecting values into the lambda</span>
-                                <span class="k">if</span> <span class="ow">not</span> <span class="n">meta</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">_args</span> <span class="o">:=</span> <span class="p">[</span><span class="n">injectables</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">meta_args</span><span class="p">])):</span>
-                                    <span class="k">raise</span> <span class="n">ContractViolationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Contract violated for argument: `</span><span class="si">{</span><span class="n">arg_name</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
+                                    <span class="n">injectables</span> <span class="o">|=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">symbols</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
-                            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Contract fulfilled for argument `</span><span class="si">%s</span><span class="s2">`&quot;</span><span class="p">,</span> <span class="n">arg_name</span><span class="p">)</span>
+                                <span class="k">else</span><span class="p">:</span>
 
-    <span class="n">evaluate_annotations</span><span class="p">(</span><span class="n">annotations</span><span class="p">)</span>
+                                    <span class="c1"># Evaluate contract by injecting values into the lambda</span>
+                                    <span class="k">if</span> <span class="ow">not</span> <span class="n">meta</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">_args</span> <span class="o">:=</span> <span class="p">[</span><span class="n">injectables</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">meta_args</span><span class="p">])):</span>
+                                        <span class="k">raise</span> <span class="n">ContractViolationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Contract violated for argument: `</span><span class="si">{</span><span class="n">arg_name</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
 
-    <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+                                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Contract fulfilled for argument `</span><span class="si">%s</span><span class="s2">`&quot;</span><span class="p">,</span> <span class="n">arg_name</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">return_annotation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">injectables</span><span class="p">[</span><span class="s2">&quot;return&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">injectables</span><span class="p">)</span>
-        <span class="n">evaluate_annotations</span><span class="p">({</span><span class="s2">&quot;return&quot;</span><span class="p">:</span> <span class="n">return_annotation</span><span class="p">})</span>
+        <span class="n">evaluate_annotations</span><span class="p">(</span><span class="n">annotations</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">result</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">return_annotation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">injectables</span><span class="p">[</span><span class="s2">&quot;return&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">injectables</span><span class="p">)</span>
+            <span class="n">evaluate_annotations</span><span class="p">({</span><span class="s2">&quot;return&quot;</span><span class="p">:</span> <span class="n">return_annotation</span><span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)(</span><span class="n">partial</span><span class="p">(</span><span class="n">wrapper</span><span class="p">,</span> <span class="n">func</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Not a callable. Did you use a non-keyword argument?&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)(</span><span class="n">partial</span><span class="p">(</span><span class="n">wrapper</span><span class="p">,</span> <span class="n">func</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">decorator</span></div>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="c1"># pylint: disable=invalid-name, missing-function-docstring</span>
-    <span class="c1"># Example</span>
     <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
     <span class="kn">from</span> <span class="nn">numpy.typing</span> <span class="kn">import</span> <span class="n">NDArray</span>
 
     <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(levelname)s</span><span class="s2"> [</span><span class="si">%(funcName)s</span><span class="s2">:</span><span class="si">%(lineno)d</span><span class="s2">] </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
 
-    <span class="nd">@contract</span>
+    <span class="nd">@contract</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">spam</span><span class="p">(</span>
         <span class="n">a</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">==</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">],</span>
         <span class="n">b</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">o</span><span class="p">:</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span> <span class="o">==</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">],</span>
