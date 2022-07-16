@@ -5,7 +5,7 @@ import numpy as np
 from numpy.typing import NDArray
 import pandas as pd
 import pytest
-from design_by_contract import contract, ContractViolationError, ContractLogicError, UnresolvedSymbol
+from design_by_contract import contract, ContractViolationError, UnresolvedSymbol
 
 # pylint: skip-file
 class TestNumpy:
@@ -198,6 +198,33 @@ class TestGeneral:
             a == b
 
         assert str(exc_info.value) == ("Symbols `a` and `b` undefined")
+
+    def test_decorator_non_kw(self) -> None:
+
+        with pytest.raises(TypeError) as exc_info:
+
+            @contract("y")  # type: ignore
+            def spam(
+                a: Annotated[NDArray[Any], lambda y, m, n: (m, n) == y.shape],
+                b: Annotated[NDArray[Any], lambda y, n, o: (n, o) == y.shape],
+            ) -> Annotated[NDArray[Any], lambda y, m, o: y.shape == (m, o)]:
+
+                return a @ b
+
+        assert str(exc_info.value) == "Not a callable. Did you use a non-keyword argument?"
+
+    def test_decorator_empty_paranthesis(self) -> None:
+        @contract()
+        def spam(
+            a: Annotated[NDArray[Any], lambda x, m, n: (m, n) == x.shape],
+            b: Annotated[NDArray[Any], lambda x, n, o: (n, o) == x.shape],
+        ) -> Annotated[NDArray[Any], lambda x, o: x.shape == (m, o)]:
+            return a @ b
+
+        with pytest.raises(ContractViolationError) as exc_info:
+            spam(np.zeros((3, 2)), np.zeros((3, 4)))
+
+        assert str(exc_info.value) == ("Contract violated for argument: `b`")
 
 
 class TestPandas:
