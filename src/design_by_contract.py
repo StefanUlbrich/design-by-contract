@@ -25,18 +25,18 @@ class UnresolvedSymbol:
     assignment.
     """
 
-    name: Optional[str]
+    name: str
     value: Optional[Any] = None
 
     def __eq__(self, other: Any) -> Union["UnresolvedSymbol", bool]:  # type: ignore[override]
         match other:
-            case UnresolvedSymbol(None):
+            case UnresolvedSymbol(name=name, value=None):
                 if self.value is None:
-                    raise ContractViolationError(f"Symbols `{self.name}` and `{other.name}` undefined")
+                    raise ContractViolationError(f"Symbols `{self.name}` and `{name}` undefined")
                 other.value = self.value
-            case UnresolvedSymbol(_, value) if self.value is None:
+            case UnresolvedSymbol(name=_, value=value) if self.value is None:
                 self.value = value
-            case UnresolvedSymbol(name, value) if value != self.value:
+            case UnresolvedSymbol(name=name, value=value) if value != self.value:
                 raise ContractViolationError(
                     f"Symbols `{self.name}` and `{name}` do not match: `{self.value}` != `{value}`"
                 )
