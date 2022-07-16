@@ -1,9 +1,8 @@
 import logging
 from dataclasses import dataclass
-from inspect import get_annotations, getfullargspec
+from functools import wraps
+from inspect import get_annotations, getfullargspec, signature
 from typing import Annotated, Any, Callable, Optional, ParamSpec, TypeVar, Union
-
-from decorator import decorator
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +59,7 @@ R = TypeVar("R")
 
 def contract(reserved: str = "x", evaluate: bool = True) -> Callable[[Callable[P, R]], Callable[P, R]]:
     def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        @wraps(func)
         def wrapper(*args: Any, **kw: Any) -> R:
             """
             A decorator for enabling design by contract using :class:`typing.Annotated`.
