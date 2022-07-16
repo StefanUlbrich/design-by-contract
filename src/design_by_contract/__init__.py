@@ -1,8 +1,17 @@
 import logging
 from dataclasses import dataclass
-from functools import wraps
+from functools import partial, wraps
 from inspect import get_annotations, getfullargspec, signature
-from typing import Annotated, Any, Callable, Optional, ParamSpec, TypeVar, Union
+from typing import (
+    Annotated,
+    Any,
+    Callable,
+    Optional,
+    ParamSpec,
+    TypeVar,
+    Union,
+    overload,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -57,102 +66,121 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-def contract(reserved: str = "x", evaluate: bool = True) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    def decorator(func: Callable[P, R]) -> Callable[P, R]:
-        @wraps(func)
-        def wrapper(*args: Any, **kw: Any) -> R:
-            """
-            A decorator for enabling design by contract using :class:`typing.Annotated`.
+@overload
+def contract(func: Callable[P, R]) -> Callable[P, R]:
+    ...
 
-            Define contract conditions as lambdas together with their type annotation.
 
-            Parameters
-            ----------
-            reserved : str, optional
-                This symbol gets always replaced by the current argument name, by default "x"
-            evaluate : bool, optional
-                If False, the contracts are not evaluated, by default True
-            """
+@overload
+def contract(*, reserved: str = "x", evaluate: bool = True) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    ...
 
-            if not evaluate:
-                return func(*args, **kw)
 
-            annotations = get_annotations(func)
-            return_annotation = annotations.pop("return", None)
+def contract(
+    func: Optional[Callable[P, R]] = None, *, reserved: str = "x", evaluate: bool = True
+) -> Union[Callable[[Callable[P, R]], Callable[P, R]], Callable[P, R]]:
+    """
+    A decorator for enabling design by contract using :class:`typing.Annotated`.
 
-            if reserved in annotations.keys():
-                raise ValueError(f"Argument cannot be the reserved identifier `{reserved}`")
+    Define contract conditions as lambdas together with their type annotation.
+    The decorator is overloaded so you can call it eigher with `@contract` or
+    `@contract(...)` with our without arguments. Note that positional keywords
+    are not allowed (i.e., you need to use keyword arguments)
 
-            # Resolved function arguments passed to func
-            injectables = dict(zip(annotations.keys(), args))
-            logger.debug("injectables: %s", injectables)
+    Parameters
+    ----------
+    reserved : str, optional
+        This symbol gets always replaced by the current argument name, by default "x".
+        This is a keyword only argument.
+    evaluate : bool, optional
+        If False, the contracts are not evaluated, by default True.
+        This is a keyword only argument.
+    """
 
-            def evaluate_annotations(annotations: dict[str, Any]) -> None:
-                nonlocal injectables
-                for arg_name, annotation in annotations.items():
+    def wrapper(func: Callable[P, R], *args: Any, **kw: Any) -> R:
+        """The actual logic"""
 
-                    # Filter for typing.Annotation objects with extra annotations
-                    if hasattr(annotation, "__metadata__"):
-                        for meta in annotation.__metadata__:
-                            # Only consider lambdas/callables
-                            if callable(meta):
-                                meta_args = getfullargspec(meta).args
-                                # Only if the original argument's name is among its argument names
-                                # TODO we shold remove that
-                                if arg_name in meta_args or reserved in meta_args:
+        if not evaluate:
+            return func(*args, **kw)
 
-                                    # the reserved identifier is a shortcut
-                                    injectables[reserved] = injectables[arg_name]
-                                    dependencies = set(injectables.keys()).intersection(meta_args)
+        annotations = get_annotations(func)
+        return_annotation = annotations.pop("return", None)
+
+        if reserved in annotations.keys():
+            raise ValueError(f"Argument cannot be the reserved identifier `{reserved}`")
+
+        # Resolved function arguments passed to func
+        injectables = dict(zip(annotations.keys(), args))
+        logger.debug("injectables: %s", injectables)
+
+        def evaluate_annotations(annotations: dict[str, Any]) -> None:
+            nonlocal injectables
+            for arg_name, annotation in annotations.items():
+
+                # Filter for typing.Annotation objects with extra annotations
+                if hasattr(annotation, "__metadata__"):
+                    for meta in annotation.__metadata__:
+                        # Only consider lambdas/callables
+                        if callable(meta):
+                            meta_args = getfullargspec(meta).args
+                            # Only if the original argument's name is among its argument names
+                            # TODO we shold remove that
+                            if arg_name in meta_args or reserved in meta_args:
+
+                                # the reserved identifier is a shortcut
+                                injectables[reserved] = injectables[arg_name]
+                                dependencies = set(injectables.keys()).intersection(meta_args)
+                                logger.debug(
+                                    "contract for `%s`, resolved: `%s`",
+                                    arg_name,
+                                    {i: injectables[i] for i in dependencies},
+                                )
+
+                                # Look for arguments that cannot be injected
+                                if unresolved := set(meta_args) - set(injectables.keys()):
+
+                                    symbols = {i: UnresolvedSymbol(i) for i in unresolved}
+
                                     logger.debug(
-                                        "contract for `%s`, resolved: `%s`",
-                                        arg_name,
-                                        {i: injectables[i] for i in dependencies},
+                                        "contract for `%s`, unresolved: `%s`, %s", arg_name, unresolved, symbols
                                     )
 
-                                    # Look for arguments that cannot be injected
-                                    if unresolved := set(meta_args) - set(injectables.keys()):
+                                    if not meta(*[(symbols | injectables)[i] for i in meta_args]):
+                                        raise ContractViolationError(f"Contract violated for argument: `{arg_name}`")
 
-                                        symbols = {i: UnresolvedSymbol(i) for i in unresolved}
-
-                                        logger.debug(
-                                            "contract for `%s`, unresolved: `%s`, %s", arg_name, unresolved, symbols
+                                    if any([i.value is None for i in symbols.values()]):
+                                        raise ContractLogicError(
+                                            f"Not all symbols were resolved `{symbols}`",
                                         )
 
-                                        if not meta(*[(symbols | injectables)[i] for i in meta_args]):
-                                            raise ContractViolationError(
-                                                f"Contract violated for argument: `{arg_name}`"
-                                            )
+                                    injectables |= {k: v.value for k, v in symbols.items()}
 
-                                        if any([i.value is None for i in symbols.values()]):
-                                            raise ContractLogicError(
-                                                f"Not all symbols were resolved `{symbols}`",
-                                            )
+                                else:
 
-                                        injectables |= {k: v.value for k, v in symbols.items()}
+                                    # Evaluate contract by injecting values into the lambda
+                                    if not meta(*(_args := [injectables[i] for i in meta_args])):
+                                        raise ContractViolationError(f"Contract violated for argument: `{arg_name}`")
 
-                                    else:
+                                logger.debug("Contract fulfilled for argument `%s`", arg_name)
 
-                                        # Evaluate contract by injecting values into the lambda
-                                        if not meta(*(_args := [injectables[i] for i in meta_args])):
-                                            raise ContractViolationError(
-                                                f"Contract violated for argument: `{arg_name}`"
-                                            )
+        evaluate_annotations(annotations)
 
-                                    logger.debug("Contract fulfilled for argument `%s`", arg_name)
+        result = func(*args, **kw)
 
-            evaluate_annotations(annotations)
+        if return_annotation is not None:
+            injectables["return"] = result
+            logger.debug(injectables)
+            evaluate_annotations({"return": return_annotation})
 
-            result = func(*args, **kw)
+        return result
 
-            if return_annotation is not None:
-                injectables["return"] = result
-                logger.debug(injectables)
-                evaluate_annotations({"return": return_annotation})
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        return wraps(func)(partial(wrapper, func))
 
-            return result
-
-        return wrapper
+    if func is not None:
+        if not callable(func):
+            raise TypeError("Not a callable. Did you use a non-keyword argument?")
+        return wraps(func)(partial(wrapper, func))
 
     return decorator
 
