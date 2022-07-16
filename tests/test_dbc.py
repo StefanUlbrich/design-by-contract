@@ -5,12 +5,12 @@ import numpy as np
 from numpy.typing import NDArray
 import pandas as pd
 import pytest
-from design_by_contract import contract, ContractViolationError, ContractLogicError, UnresolvedSymbol
+from design_by_contract import contract, ContractViolationError, UnresolvedSymbol
 
 # pylint: skip-file
 class TestNumpy:
     def test_matmult_correct(self) -> None:
-        @contract
+        @contract()
         def spam(
             a: Annotated[NDArray[Any], lambda a, m, n: (m, n) == a.shape],
             b: Annotated[NDArray[Any], lambda b, n, o: (n, o) == b.shape],
@@ -20,7 +20,7 @@ class TestNumpy:
         spam(np.zeros((3, 2)), np.zeros((2, 4)))
 
     def test_matmult_correct_shortcut(self) -> None:
-        @contract
+        @contract()
         def spam(
             a: Annotated[NDArray[Any], lambda x, m, n: (m, n) == x.shape],
             b: Annotated[NDArray[Any], lambda x, n, o: (n, o) == x.shape],
@@ -30,7 +30,7 @@ class TestNumpy:
         spam(np.zeros((3, 2)), np.zeros((2, 4)))
 
     def test_matmult_violated_in_return(self) -> None:
-        @contract
+        @contract()
         def spam(
             a: Annotated[NDArray[Any], lambda x, m, n: (m, n) == x.shape],
             b: Annotated[NDArray[Any], lambda x, n, o: (n, o) == x.shape],
@@ -43,7 +43,7 @@ class TestNumpy:
         assert str(exc_info.value) == ("Contract violated for argument: `return`")
 
     def test_matmult_violated_in_argument(self) -> None:
-        @contract
+        @contract()
         def spam(
             a: Annotated[NDArray[Any], lambda x, m, n: (m, n) == x.shape],
             b: Annotated[NDArray[Any], lambda x, n, o: (n, o) == x.shape],
@@ -56,7 +56,7 @@ class TestNumpy:
         assert str(exc_info.value) == ("Contract violated for argument: `b`")
 
     def test_matmult_unresolved(self) -> None:
-        @contract
+        @contract()
         def spam(
             a: Annotated[NDArray[Any], lambda x, m, n: (m, n) == x.shape and m > 2],
             b: Annotated[NDArray[Any], lambda x, n, o: (n, o) == x.shape],
@@ -69,7 +69,7 @@ class TestNumpy:
         assert str(exc_info.value) == ("'>' not supported between instances of 'UnresolvedSymbol' and 'int'")
 
     def test_matmult_multi(self) -> None:
-        @contract
+        @contract()
         def spam(
             a: Annotated[NDArray[Any], lambda x, m, n: (m, n) == x.shape, lambda x: x.shape[1] == 2],
             b: Annotated[NDArray[Any], lambda x, n, o: (n, o) == x.shape],
@@ -79,7 +79,7 @@ class TestNumpy:
         spam(np.zeros((3, 2)), np.zeros((2, 4)))
 
     def test_matmult_mixed(self) -> None:
-        @contract
+        @contract()
         def spam(
             a: Annotated[NDArray[Any], lambda x, m, n: (m, n) == x.shape and x.shape[1] == 2],
             b: Annotated[NDArray[Any], lambda x, n, o: (n, o) == x.shape],
@@ -89,7 +89,7 @@ class TestNumpy:
         spam(np.zeros((3, 2)), np.zeros((2, 4)))
 
     def test_matmult_mixed_2(self) -> None:
-        @contract
+        @contract()
         def spam(
             a: Annotated[NDArray[Any], lambda x, n: (3, n) == x.shape],
             b: Annotated[NDArray[Any], lambda x, n, o: (n, o) == x.shape],
@@ -99,7 +99,7 @@ class TestNumpy:
         spam(np.zeros((3, 2)), np.zeros((2, 4)))
 
     def test_matmult_mixed_violated(self) -> None:
-        @contract
+        @contract()
         def spam(
             a: Annotated[NDArray[Any], lambda x, n: (4, n) == x.shape],
             b: Annotated[NDArray[Any], lambda x, n, o: (n, o) == x.shape],
@@ -116,7 +116,7 @@ class TestNumpy:
         assert str(exc_info.value) == ("Contract violated for argument: `a`")
 
     def test_vstack(self) -> None:
-        @contract
+        @contract()
         def spam(
             a: Annotated[NDArray[Any], lambda x, m, o: (m, o) == x.shape],
             b: Annotated[NDArray[Any], lambda x, n, o: (n, o) == x.shape],
@@ -129,7 +129,7 @@ class TestNumpy:
 
 class TestGeneral:
     def test_docstring(self) -> None:
-        @contract
+        @contract()
         def spam(a: NDArray[Any], b: Annotated[NDArray[Any], lambda b, m: b.shape == (m, 3)]) -> None:
             """A spam function"""
             pass
@@ -137,7 +137,7 @@ class TestGeneral:
         assert spam.__doc__ == "A spam function"
 
     def test_signature(self) -> None:
-        @contract
+        @contract()
         def spam(a: NDArray[Any], b: Annotated[NDArray[Any], lambda b, m: b.shape == (m, 3)]) -> None:
             pass
 
@@ -205,7 +205,7 @@ class TestPandas:
         a = pd.DataFrame(np.random.randint(0, 2, size=(10, 3)), columns=list("ABC"))
         b = pd.DataFrame(np.random.randint(0, 3, size=(10, 3)), columns=list("BCD"))
 
-        @contract
+        @contract()
         def spam(
             a: Annotated[pd.DataFrame, lambda x, c: c == {"C", "B"}, lambda x, c: c.issubset(x.columns)],
             b: Annotated[pd.DataFrame, lambda x, c: c <= set(x.columns)],
@@ -218,7 +218,7 @@ class TestPandas:
         a = pd.DataFrame(np.random.randint(0, 2, size=(10, 3)), columns=list("ABC"))
         b = pd.DataFrame(np.random.randint(0, 3, size=(10, 3)), columns=list("CDE"))
 
-        @contract
+        @contract()
         def spam(
             a: Annotated[pd.DataFrame, lambda x, c: c == {"C", "B"}, lambda x, c: c.issubset(x.columns)],
             b: Annotated[pd.DataFrame, lambda x, c: c <= set(x.columns)],
