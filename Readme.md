@@ -194,7 +194,7 @@ Pull requests are welcome!
 
 ## Changelog
 
-* v0.3.1 (2022-06-17): Remove dependency to untyped `decorator`, add fully typed replacement 
+* v0.3.0 (2022-06-17): Remove dependency to untyped `decorator`, add fully typed replacement 
 * v0.2.2 (2022-06-16): Bug Fixes and passing Mypy in strict mode (thanks Alex Povel) 
 * v0.2 (2022-03-05): Simple symbolic support
 * v0.1.1 (2022-01-30): Better documentation
