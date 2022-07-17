@@ -52,3 +52,14 @@ ignore_missing_imports = true
 [tool.black]
 line-length = 120
 target_version = ["py310"]
+
+[tool.pylint.format]
+max-line-length=120
+
+[tool.pylint."MESSAGES CONTROL"]
+disable = [
+    "missing-module-docstring"
+]
+
+[tool.pylint.basic]
+good-names=['R','i','j','k','ex','Run','_']
