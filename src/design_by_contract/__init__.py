@@ -183,21 +183,3 @@ def contract(
         return wraps(func)(partial(wrapper, func))
 
     return decorator
-
-
-if __name__ == "__main__":
-    # pylint: disable=invalid-name, missing-function-docstring
-    import numpy as np
-    from numpy.typing import NDArray
-
-    logging.basicConfig(format="%(name)s %(levelname)s [%(funcName)s:%(lineno)d] %(message)s")
-    logger.setLevel(logging.DEBUG)
-
-    @contract()
-    def spam(
-        a: Annotated[NDArray[Any], lambda x, m, n: (m, n) == x.shape],
-        b: Annotated[NDArray[Any], lambda x, n, o: (n, o) == x.shape],
-    ) -> Annotated[NDArray[Any], lambda x, m, o: x.shape == (m, o)]:
-        return a @ b
-
-    spam(np.zeros((3, 2)), np.zeros((2, 4)))
