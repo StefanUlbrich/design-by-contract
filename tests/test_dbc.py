@@ -218,13 +218,23 @@ class TestGeneral:
         def spam(
             a: Annotated[NDArray[Any], lambda x, m, n: (m, n) == x.shape],
             b: Annotated[NDArray[Any], lambda x, n, o: (n, o) == x.shape],
-        ) -> Annotated[NDArray[Any], lambda x, o: x.shape == (m, o)]:
+        ) -> Annotated[NDArray[Any], lambda x, m, o: x.shape == (m, o)]:
             return a @ b
 
         with pytest.raises(ContractViolationError) as exc_info:
             spam(np.zeros((3, 2)), np.zeros((3, 4)))
 
         assert str(exc_info.value) == ("Contract violated for argument: `b`")
+
+    def test_no_symbols(self) -> None:
+        @contract
+        def spam(
+            a: Annotated[NDArray[Any], lambda a, b: a.shape[1] == b.shape[0]],
+            b: NDArray[Any],
+        ) -> Annotated[NDArray[Any], lambda x, a, b: x.shape == (a.shape[0], b.shape[1])]:
+            return a @ b
+
+        spam(np.zeros((3, 2)), np.zeros((2, 4)))
 
 
 class TestPandas:
