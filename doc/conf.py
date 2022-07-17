@@ -22,7 +22,7 @@ copyright = '2022, Stefan Ulbrich'
 author = 'Stefan Ulbrich'
 
 # The full version, including alpha/beta/rc tags
-release = '0.2'
+release = '0.3.0'
 
 
 # -- General configuration ---------------------------------------------------
