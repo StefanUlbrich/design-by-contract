@@ -41,8 +41,8 @@ from design_by_contract import contract
 
 @contract
 def spam(
-    first: Annotated[np.ndarray, lambda first, m, n: (m, n) == first.shape], # symbols m and n represent the shape of `a`
-    second: Annotated[np.ndarray, lambda second, n, o: (n, o) == second.shape], # `b` number of columns matches the number of rows of `a`
+    a: Annotated[np.ndarray, lambda a, m, n: (m, n) == a.shape], # symbols m and n represent the shape of `a`
+    b: Annotated[np.ndarray, lambda b, n, o: (n, o) == b.shape], # `b` number of columns matches the number of rows of `a`
 ) -> Annotated[np.ndarray, lambda x, m, o: x.shape == (m, o)]: # `x` holds the return value. The shape of `x` must equal `x` times `o`
     """Matrix multiplication"""
     return a @ b
@@ -54,8 +54,8 @@ that you cannot use `x` as a function argument unless you choose another reserve
 ```python
 @contract(reserved='y')
 def spam(
-    first: Annotated[np.ndarray, lambda y, m, n: (m, n) == y.shape],
-    second: Annotated[np.ndarray, lambda y, n, o: (n, o) == y.shape],
+    a: Annotated[np.ndarray, lambda y, m, n: (m, n) == y.shape],
+    b: Annotated[np.ndarray, lambda y, n, o: (n, o) == y.shape],
 ) -> Annotated[np.ndarray, lambda y, m, o: y.shape == (m, o)]:
     """Matrix multiplication"""
     return a @ b
