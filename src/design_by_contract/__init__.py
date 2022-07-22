@@ -1,17 +1,21 @@
 import logging
 from dataclasses import dataclass
 from functools import partial, wraps
-from inspect import get_annotations, getfullargspec, signature
-from typing import (
-    Annotated,
-    Any,
-    Callable,
-    Optional,
-    ParamSpec,
-    TypeVar,
-    Union,
-    overload,
-)
+from inspect import get_annotations, getfullargspec, getsource, signature
+from pickle import TRUE
+from typing import Any, Callable, Dict, Optional, ParamSpec, TypeVar, Union, overload
+
+try:
+    import ast
+    from textwrap import dedent
+
+    import asttokens
+
+    __HAS_ASTTOKENS__ = True
+except ImportError:
+    __HAS_ASTTOKENS__ = False
+    print("could not import")
+
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +70,30 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
+def get_predicate_src(func: Callable[P, R]) -> Dict[str, list[str]]:
+    """Extract the source code of the predicates."""
+    if not __HAS_ASTTOKENS__:
+        return {}
+
+    src = dedent(getsource(func))
+    atok = asttokens.ASTTokens(src, parse=True)
+
+    func_def = atok.tree.body[0]
+
+    if not isinstance(func_def, ast.FunctionDef):
+        raise TypeError("Not a function")
+
+    return {
+        i.arg: [
+            src[j.first_token.startpos : j.last_token.endpos + 1]  #  type: ignore
+            for j in i.annotation.slice.elts  #  type: ignore
+            if isinstance(j, ast.Lambda)
+        ]
+        for i in func_def.args.args
+        if isinstance(i.annotation, ast.Subscript) and i.annotation.value.id == "Annotated"  #  type: ignore
+    }
+
+
 @overload
 def contract(func: Callable[P, R]) -> Callable[P, R]:
     ...
@@ -99,6 +127,8 @@ def contract(
 
     def wrapper(func: Callable[P, R], *args: Any, **kw: Any) -> R:
         """The actual logic"""
+
+        logger.info(get_predicate_src(func))
 
         if not evaluate:
             return func(*args, **kw)
