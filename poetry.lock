@@ -372,7 +372,7 @@ testing = ["Django (<3.1)", "colorama", "docopt", "pytest (<7.0.0)"]
 name = "jinja2"
 version = "3.1.2"
 description = "A very fast and expressive template engine."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -451,7 +451,7 @@ benchmarking = ["pytest-benchmark (>=3.2,<4.0)", "pytest", "psutil"]
 name = "markupsafe"
 version = "2.1.1"
 description = "Safely add untrusted strings to HTML/XML markup."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -1144,7 +1144,7 @@ docstrings = ["asttokens"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "ec2c30c2bcf499abe7462309b5e498cd643b6689319dce2858341b38daece5ec"
+content-hash = "072af080fa73f572f48763d9455a04975ee1b78a035bd9d8104d6d7b463e7a65"
 
 [metadata.files]
 alabaster = [

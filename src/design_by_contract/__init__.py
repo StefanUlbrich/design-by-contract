@@ -10,11 +10,11 @@ try:
     from textwrap import dedent
 
     import asttokens
+    from jinja2 import Template
 
-    __HAS_ASTTOKENS__ = True
+    __MODIFY_DOCSTRINGS__ = True
 except ImportError:
-    __HAS_ASTTOKENS__ = False
-    print("could not import")
+    __MODIFY_DOCSTRINGS__ = False
 
 
 logger = logging.getLogger(__name__)
@@ -70,9 +70,9 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-def get_predicate_src(func: Callable[P, R]) -> Dict[str, list[str]]:
+def get_predicate_src(func: Callable[P, R], inject: bool) -> Dict[str, list[str]]:
     """Extract the source code of the predicates."""
-    if not __HAS_ASTTOKENS__:
+    if not __MODIFY_DOCSTRINGS__:
         return {}
 
     src = dedent(getsource(func))
@@ -83,15 +83,20 @@ def get_predicate_src(func: Callable[P, R]) -> Dict[str, list[str]]:
     if not isinstance(func_def, ast.FunctionDef):
         raise TypeError("Not a function")
 
-    return {
+    sources = {
         i.arg: [
-            src[j.first_token.startpos : j.last_token.endpos + 1]  #  type: ignore
+            src[j.first_token.startpos : j.last_token.endpos]  #  type: ignore
             for j in i.annotation.slice.elts  #  type: ignore
             if isinstance(j, ast.Lambda)
         ]
         for i in func_def.args.args
         if isinstance(i.annotation, ast.Subscript) and i.annotation.value.id == "Annotated"  #  type: ignore
     }
+
+    if inject and func.__doc__ is not None:
+        func.__doc__ = Template(func.__doc__).render(sources)
+
+    return sources
 
 
 @overload
@@ -100,12 +105,14 @@ def contract(func: Callable[P, R]) -> Callable[P, R]:
 
 
 @overload
-def contract(*, reserved: str = "x", evaluate: bool = True) -> Callable[[Callable[P, R]], Callable[P, R]]:
+def contract(
+    *, reserved: str = "x", evaluate: bool = True, inject: bool = False
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     ...
 
 
 def contract(
-    func: Optional[Callable[P, R]] = None, *, reserved: str = "x", evaluate: bool = True
+    func: Optional[Callable[P, R]] = None, *, reserved: str = "x", evaluate: bool = True, inject: bool = False
 ) -> Union[Callable[[Callable[P, R]], Callable[P, R]], Callable[P, R]]:
     """
     A decorator for enabling design by contract using :class:`typing.Annotated`.
@@ -127,8 +134,6 @@ def contract(
 
     def wrapper(func: Callable[P, R], *args: Any, **kw: Any) -> R:
         """The actual logic"""
-
-        logger.info(get_predicate_src(func))
 
         if not evaluate:
             return func(*args, **kw)
@@ -204,12 +209,52 @@ def contract(
 
         return result
 
-    def decorator(func: Callable[P, R]) -> Callable[P, R]:
-        return wraps(func)(partial(wrapper, func))
-
     if func is not None:
         if not callable(func):
             raise TypeError("Not a callable. Did you use a non-keyword argument?")
         return wraps(func)(partial(wrapper, func))
 
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        get_predicate_src(func, inject)
+        return wraps(func)(partial(wrapper, func))
+
     return decorator
+
+
+# if __name__ == "__main__":
+#     # Example
+#     from numpy.typing import NDArray
+#     import numpy as np
+#     from typing import Annotated
+
+#     logging.basicConfig(format="%(name)s %(levelname)s [%(funcName)s:%(lineno)d] %(message)s")
+#     logger.setLevel(logging.DEBUG)
+
+#     @contract(inject=True)
+#     def spam(
+#         a: Annotated[NDArray[Any], lambda a, m, n: (m, n) == a.shape],
+#         b: Annotated[NDArray[Any], lambda b, n, o: (n, o) == b.shape, lambda b, n, o: (n, o) == b.shape],
+#     ) -> Annotated[NDArray[Any], lambda x, m, o: x.shape == (m, o)]:
+#         """
+#         Test function
+
+#         Parameters
+#         ----------
+
+#         a
+#             {% for i in a %}
+#             :code:`{{ i }}`{% endfor %}
+
+#         b
+#             {% for i in b %}
+#             :code:`{{ i }}`{% endfor %}
+
+#         Returns
+#         -------
+#         _type_
+#             _description_
+#         """
+#         return a @ b
+
+#     logger.debug("Docstring: %s\n%s", spam.__doc__, str(signature(spam)) )
+#     spam(np.zeros((3, 2)), np.zeros((2, 4)))

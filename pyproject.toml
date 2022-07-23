@@ -11,14 +11,15 @@ classifiers = [
     "Topic :: Software Development :: Documentation",
     "Topic :: Software Development :: Quality Assurance",
     "Intended Audience :: Developers",
-    "Development Status :: 3 - Alpha"
+    "Development Status :: 3 - Alpha",
 ]
 
 include = ["license.txt"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-asttokens = {version = "^2.0.5", optional = true}
+asttokens = { version = "^2.0.5", optional = true }
+Jinja2 = {version = "^3.1.2", optional = true}
 
 [tool.poetry.dev-dependencies]
 numpy = "^1.23.1"
@@ -61,12 +62,10 @@ line-length = 120
 target_version = ["py310"]
 
 [tool.pylint.format]
-max-line-length=120
+max-line-length = 120
 
 [tool.pylint."MESSAGES CONTROL"]
-disable = [
-    "missing-module-docstring"
-]
+disable = ["missing-module-docstring"]
 
 [tool.pylint.basic]
-good-names=['R','i','j','k','ex','Run','_']
+good-names = ['R', 'i', 'j', 'k', 'ex', 'Run', '_']
