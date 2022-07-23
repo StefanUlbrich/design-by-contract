@@ -1,7 +1,7 @@
 # Welcome to `design-by-contract`
 
 A minimalistic decorator for the [design by contract pattern](https://en.wikipedia.org/wiki/Design_by_contract)
-written in a just little more than 100 lines of modern Python 3.10 code (not counting documentation and logging).
+written in a just below 140 lines of modern Python 3.10 code (excluding counting documentation and logging).
 
 Contracts are useful to impose restrictions and constraints on function arguments in a way that
 
@@ -194,8 +194,8 @@ Pull requests are welcome!
 
 ## Changelog
 
-* v0.3.0 (2022-06-17): Remove dependency to untyped `decorator`, add fully typed replacement 
-* v0.2.2 (2022-06-16): Bug Fixes and passing Mypy in strict mode (thanks Alex Povel) 
+* v0.3.0 (2022-06-17): Remove dependency to untyped `decorator`, add fully typed replacement
+* v0.2.2 (2022-06-16): Bug Fixes and passing Mypy in strict mode (thanks Alex Povel)
 * v0.2 (2022-03-05): Simple symbolic support
 * v0.1.1 (2022-01-30): Better documentation
 * v0.1.0 (2022-01-29): Initial release
