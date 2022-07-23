@@ -236,6 +236,21 @@ class TestGeneral:
 
         spam(np.zeros((3, 2)), np.zeros((2, 4)))
 
+    def test_docstring_injection(self) -> None:
+        @contract(inject=True)
+        def spam(
+            a: Annotated[NDArray[Any], lambda a, m, n: (m, n) == a.shape],
+            b: Annotated[NDArray[Any], lambda b, n, o: (n, o) == b.shape, lambda b, n, o: (n, o) == b.shape],
+        ) -> Annotated[NDArray[Any], lambda x, m, o: x.shape == (m, o)]:
+            """Test function {{ a }}, {{ b }}"""
+            return a @ b
+
+        print(spam.__doc__)
+        assert (
+            spam.__doc__ == "Test function ['lambda a, m, n: (m, n) == a.shape'], "
+            "['lambda b, n, o: (n, o) == b.shape', 'lambda b, n, o: (n, o) == b.shape']"
+        )
+
 
 class TestPandas:
     def test_pandas_correct(self) -> None:
