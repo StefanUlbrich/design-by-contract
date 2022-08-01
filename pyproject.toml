@@ -20,11 +20,11 @@ include = ["license.txt"]
 python = "^3.10"
 
 [tool.poetry.dev-dependencies]
-numpy = "^1.22.1"
+numpy = "^1.23.1"
 pandas = "^1.4.0"
 pylint = "^2.12.1,!=2.12.2"
 black = "^21.12b0"
-mypy = "^0.961"
+mypy = "0.971"
 pytest = "^6.2.5"
 ipykernel = "^6.9.1"
 sphinx-book-theme = "^0.2.0"

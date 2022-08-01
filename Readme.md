@@ -41,11 +41,11 @@ from design_by_contract import contract
 
 @contract
 def spam(
-    first: Annotated[np.ndarray, lambda first, m, n: (m, n) == first.shape], # symbols m and n represent the shape of `a`
-    second: Annotated[np.ndarray, lambda second, n, o: (n, o) == second.shape], # `b` number of columns matches the number of rows of `a`
-) -> Annotated[np.ndarray, lambda x, m, o: x.shape == (m, o)]: # `x` holds the return value. The shape of `x` must equal `x` times `o`
+    first: Annotated[np.NDArray[np.floating[Any]], lambda first, m, n: (m, n) == first.shape], # symbols m and n represent the shape of `a`
+    second: Annotated[np.NDArray[np.floating[Any]], lambda second, n, o: (n, o) == second.shape], # `b` number of columns matches the number of rows of `a`
+) -> Annotated[np.NDArray[np.floating[Any]], lambda x, m, o: x.shape == (m, o)]: # `x` holds the return value. The shape of `x` must equal `x` times `o`
     """Matrix multiplication"""
-    return a @ b
+    return first @ second
 ```
 
 Contracts are lambdas with one argument named like the annotated argument. Alternatively, `x` can be used as a shortcut which means
@@ -54,11 +54,11 @@ that you cannot use `x` as a function argument unless you choose another reserve
 ```python
 @contract(reserved='y')
 def spam(
-    first: Annotated[np.ndarray, lambda y, m, n: (m, n) == y.shape],
-    second: Annotated[np.ndarray, lambda y, n, o: (n, o) == y.shape],
-) -> Annotated[np.ndarray, lambda y, m, o: y.shape == (m, o)]:
+    first: Annotated[np.NDArray[np.floating[Any]], lambda y, m, n: (m, n) == y.shape],
+    second: Annotated[np.NDArray[np.floating[Any]], lambda y, n, o: (n, o) == y.shape],
+) -> Annotated[np.NDArray[np.floating[Any]], lambda y, m, o: y.shape == (m, o)]:
     """Matrix multiplication"""
-    return a @ b
+    return first @ second
 ```
 
 Symbolic  calculus is supported to certain degree to make your life easier. The symbols `m`, `n` and `o` are defined in a way
@@ -77,10 +77,10 @@ The following example will raise an error for instance:
 ```Python
 @contract
 def spam(
-    a: Annotated[np.ndarray, lambda x, m, n: (m, n) == x.shape and m > 2], # you cannot "assign" and use `m` in the same lambda
-    #  Annotated[np.ndarray, lambda x, m, n: (m, n) == x.shape, lambda x, m:  m > 2] # this would work
-    b: Annotated[np.ndarray, lambda x, n, o: (n, o) == x.shape],
-) -> Annotated[np.ndarray, lambda x, m, o: x.shape == (m, o)]:
+    a: Annotated[np.NDArray[np.floating[Any]], lambda x, m, n: (m, n) == x.shape and m > 2], # you cannot "assign" and use `m` in the same lambda
+    #  Annotated[np.NDArray[np.floating[Any]], lambda x, m, n: (m, n) == x.shape, lambda x, m:  m > 2] # this would work
+    b: Annotated[np.NDArray[np.floating[Any]], lambda x, n, o: (n, o) == x.shape],
+) -> Annotated[np.NDArray[np.floating[Any]], lambda x, m, o: x.shape == (m, o)]:
     return a @ b
 
 spam(a, b) # raises: '>' not supported between instances of 'UnresolvedSymbol' and 'int'
@@ -96,9 +96,9 @@ complex without the need for extending the DSL (i.e., including python functions
 ```python
 @contract
 def spam(
-    a: Annotated[np.ndarray, lambda x, m, o: (m, o) == x.shape],
-    b: Annotated[np.ndarray, lambda x, n, o: (n, o) == x.shape],
-) -> Annotated[np.ndarray, lambda x, m,n,o: x.shape == (m+n, o)]:
+    a: Annotated[np.NDArray[np.floating[Any]], lambda x, m, o: (m, o) == x.shape],
+    b: Annotated[np.NDArray[np.floating[Any]], lambda x, n, o: (n, o) == x.shape],
+) -> Annotated[np.NDArray[np.floating[Any]], lambda x, m,n,o: x.shape == (m+n, o)]:
     print(np.vstack((a,b)).shape)
     return np.vstack((a,b))
 spam(np.zeros((3, 2)), np.zeros(( 4, 2)))
@@ -194,8 +194,8 @@ Pull requests are welcome!
 
 ## Changelog
 
-* v0.3.0 (2022-06-17): Remove dependency to untyped `decorator`, add fully typed replacement 
-* v0.2.2 (2022-06-16): Bug Fixes and passing Mypy in strict mode (thanks Alex Povel) 
+* v0.3.0 (2022-06-17): Remove dependency to untyped `decorator`, add fully typed replacement
+* v0.2.2 (2022-06-16): Bug Fixes and passing Mypy in strict mode (thanks Alex Povel)
 * v0.2 (2022-03-05): Simple symbolic support
 * v0.1.1 (2022-01-30): Better documentation
 * v0.1.0 (2022-01-29): Initial release
