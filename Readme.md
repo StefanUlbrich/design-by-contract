@@ -1,7 +1,7 @@
 # Welcome to `design-by-contract`
 
 A minimalistic decorator for the [design by contract pattern](https://en.wikipedia.org/wiki/Design_by_contract)
-written in a just below 140 lines of modern Python 3.10 code (excluding counting documentation and logging).
+written in just below 140 lines of modern Python 3.10 code (excluding documentation and logging).
 
 Contracts are useful to impose restrictions and constraints on function arguments in a way that
 
