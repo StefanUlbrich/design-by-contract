@@ -126,6 +126,51 @@ spam(a, b)
 Note that evaluation is not optimized. In production, you might consider disabling evaluation by passing
 `evaluate=False` as a parameter to the `contract` decorator.
 
+The package has experimental support for adding the contracts to the doctrings of the decorated functions
+such that they can be included in the API documentation (i.e., Sphinx). Currently, no purely positional or keyword arguments-only
+are supported. To activate this feature, install the package with the extra `docstrings`, e.g.,
+
+```sh
+pip install design-by-contract[docstrings]
+```
+
+This will install two extra dependencies: [jinja2](https://github.com/pallets/jinja/) for using templating 
+support and [asttokens](https://github.com/gristlabs/asttokens) for getting
+the source code of the contracts. Within the docstring, you can get access lists that contain the contract
+definition via variables of the same name as the arguments. A simple example looks like this:
+
+```python
+@contract(inject=True)
+def spam(
+    first: Annotated[NDArray[Any], lambda x, m, n: (m, n) == x.shape],
+    second: Annotated[NDArray[Any], lambda x, n, o: (n, o) == x.shape, lambda x, n, o: (n, o) == x.shape],
+) -> Annotated[NDArray[Any], lambda x, m, o: x.shape == (m, o)]:
+    """
+    Test function
+
+    Parameters
+    ----------
+
+    first
+        {% for i in first %}
+        :code:`{{ i }}`{% endfor %}
+
+    second
+        {% for i in second %}
+        :code:`{{ i }}`{% endfor %}
+
+    Returns
+    -------
+    ndarray
+        The product.
+    """
+    return first @ second
+```
+
+The `inject` parameter to the decorator determines whether the doctrings should be modified such that
+the experimental feature is only used in interactive sessions or when the documentation is build.
+This design grants the user a good deal of flexibility while not being too intrusive.
+
 ## Features
 
 * [x] Simple to used design by contract. Does not require you to learn a domain specific language necessary.
@@ -151,6 +196,7 @@ Note that evaluation is not optimized. In production, you might consider disabli
   * [ ] GitHub action for linting and formatting
   * [x] Precommit for linting and formatting
 * [ ] Speed. Well.. maybe. I haven't tested it yet.
+* [ ] Contracts added to docstrings (sphinx)
 
 ## Why?
 
