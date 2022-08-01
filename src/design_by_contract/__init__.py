@@ -1,17 +1,21 @@
 import logging
 from dataclasses import dataclass
 from functools import partial, wraps
-from inspect import get_annotations, getfullargspec, signature
-from typing import (
-    Annotated,
-    Any,
-    Callable,
-    Optional,
-    ParamSpec,
-    TypeVar,
-    Union,
-    overload,
-)
+from inspect import get_annotations, getfullargspec, getsource, signature
+from pickle import TRUE
+from typing import Any, Callable, Dict, Optional, ParamSpec, TypeVar, Union, overload
+
+try:
+    import ast
+    from textwrap import dedent
+
+    import asttokens
+    from jinja2 import Template
+
+    __MODIFY_DOCSTRINGS__ = True
+except ImportError:
+    __MODIFY_DOCSTRINGS__ = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -66,18 +70,49 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
+def get_predicate_src(func: Callable[P, R], inject: bool) -> Dict[str, list[str]]:
+    """Extract the source code of the predicates."""
+    if not __MODIFY_DOCSTRINGS__:
+        return {}
+
+    src = dedent(getsource(func))
+    atok = asttokens.ASTTokens(src, parse=True)
+
+    func_def = atok.tree.body[0]
+
+    if not isinstance(func_def, ast.FunctionDef):
+        raise TypeError("Not a function")
+
+    sources = {
+        i.arg: [
+            src[j.first_token.startpos : j.last_token.endpos]  #  type: ignore
+            for j in i.annotation.slice.elts  #  type: ignore
+            if isinstance(j, ast.Lambda)
+        ]
+        for i in func_def.args.args
+        if isinstance(i.annotation, ast.Subscript) and i.annotation.value.id == "Annotated"  #  type: ignore
+    }
+
+    if inject and func.__doc__ is not None:
+        func.__doc__ = Template(func.__doc__).render(sources)
+
+    return sources
+
+
 @overload
 def contract(func: Callable[P, R]) -> Callable[P, R]:
     ...
 
 
 @overload
-def contract(*, reserved: str = "x", evaluate: bool = True) -> Callable[[Callable[P, R]], Callable[P, R]]:
+def contract(
+    *, reserved: str = "x", evaluate: bool = True, inject: bool = False
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     ...
 
 
 def contract(
-    func: Optional[Callable[P, R]] = None, *, reserved: str = "x", evaluate: bool = True
+    func: Optional[Callable[P, R]] = None, *, reserved: str = "x", evaluate: bool = True, inject: bool = False
 ) -> Union[Callable[[Callable[P, R]], Callable[P, R]], Callable[P, R]]:
     """
     A decorator for enabling design by contract using :class:`typing.Annotated`.
@@ -174,12 +209,52 @@ def contract(
 
         return result
 
-    def decorator(func: Callable[P, R]) -> Callable[P, R]:
-        return wraps(func)(partial(wrapper, func))
-
     if func is not None:
         if not callable(func):
             raise TypeError("Not a callable. Did you use a non-keyword argument?")
         return wraps(func)(partial(wrapper, func))
 
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        get_predicate_src(func, inject)
+        return wraps(func)(partial(wrapper, func))
+
     return decorator
+
+
+# if __name__ == "__main__":
+#     # Example
+#     from numpy.typing import NDArray
+#     import numpy as np
+#     from typing import Annotated
+
+#     logging.basicConfig(format="%(name)s %(levelname)s [%(funcName)s:%(lineno)d] %(message)s")
+#     logger.setLevel(logging.DEBUG)
+
+#     @contract(inject=True)
+#     def spam(
+#         a: Annotated[NDArray[Any], lambda a, m, n: (m, n) == a.shape],
+#         b: Annotated[NDArray[Any], lambda b, n, o: (n, o) == b.shape, lambda b, n, o: (n, o) == b.shape],
+#     ) -> Annotated[NDArray[Any], lambda x, m, o: x.shape == (m, o)]:
+#         """
+#         Test function
+
+#         Parameters
+#         ----------
+
+#         a
+#             {% for i in a %}
+#             :code:`{{ i }}`{% endfor %}
+
+#         b
+#             {% for i in b %}
+#             :code:`{{ i }}`{% endfor %}
+
+#         Returns
+#         -------
+#         _type_
+#             _description_
+#         """
+#         return a @ b
+
+#     logger.debug("Docstring: %s\n%s", spam.__doc__, str(signature(spam)) )
+#     spam(np.zeros((3, 2)), np.zeros((2, 4)))
