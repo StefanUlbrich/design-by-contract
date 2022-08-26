@@ -2,7 +2,6 @@
 name = "design-by-contract"
 version = "0.3.1"
 description = "Handy decorator to define contracts with dependency injection in Python 3.10 and above"
-authors = ["Stefan Ulbrich"]
 license = "MIT"
 repository = "https://github.com/StefanUlbrich/design-by-contract"
 readme = "Readme.md"
