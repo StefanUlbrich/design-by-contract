@@ -10,11 +10,14 @@ try:
     from textwrap import dedent
 
     import asttokens
-    from jinja2 import Template
+    from jinja2 import Template, Environment
 
     __MODIFY_DOCSTRINGS__ = True
 except ImportError:
     __MODIFY_DOCSTRINGS__ = False
+    # Todo does: `Environment` = Any work?
+    class Environment:  # type: ignore
+        """Placeholer class if jinja is not found"""
 
 
 logger = logging.getLogger(__name__)
@@ -70,7 +73,7 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-def get_predicate_src(func: Callable[P, R], inject: bool) -> Dict[str, list[str]]:
+def get_predicate_src(func: Callable[P, R], jinja: Optional[Environment]) -> Dict[str, list[str]]:
     """Extract the source code of the predicates."""
     if not __MODIFY_DOCSTRINGS__:
         return {}
@@ -93,8 +96,8 @@ def get_predicate_src(func: Callable[P, R], inject: bool) -> Dict[str, list[str]
         if isinstance(i.annotation, ast.Subscript) and i.annotation.value.id == "Annotated"  #  type: ignore
     }
 
-    if inject and func.__doc__ is not None:
-        func.__doc__ = Template(func.__doc__).render(sources)
+    if jinja is not None and func.__doc__ is not None:
+        func.__doc__ = jinja.from_string(func.__doc__).render(sources | {"contract": sources})
 
     return sources
 
@@ -106,13 +109,17 @@ def contract(func: Callable[P, R]) -> Callable[P, R]:
 
 @overload
 def contract(
-    *, reserved: str = "x", evaluate: bool = True, inject: bool = False
+    *, reserved: str = "x", evaluate: bool = True, jinja: Optional[Environment] = None  # , inject: bool = False
 ) -> Callable[[Callable[P, R]], Callable[P, R]]:
     ...
 
 
 def contract(
-    func: Optional[Callable[P, R]] = None, *, reserved: str = "x", evaluate: bool = True, inject: bool = False
+    func: Optional[Callable[P, R]] = None,
+    *,
+    reserved: str = "x",
+    evaluate: bool = True,  # inject: bool = False,
+    jinja: Optional[Environment] = None,
 ) -> Union[Callable[[Callable[P, R]], Callable[P, R]], Callable[P, R]]:
     """
     A decorator for enabling design by contract using :class:`typing.Annotated`.
@@ -215,7 +222,7 @@ def contract(
         return wraps(func)(partial(wrapper, func))
 
     def decorator(func: Callable[P, R]) -> Callable[P, R]:
-        get_predicate_src(func, inject)
+        get_predicate_src(func, jinja)
         return wraps(func)(partial(wrapper, func))
 
     return decorator
