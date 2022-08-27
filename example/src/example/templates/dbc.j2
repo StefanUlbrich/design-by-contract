@@ -1,0 +1,12 @@
+{% macro document(contract) -%}
+**Preconditions:**
+    {% for var, conditions in contract.items() %}{% if var!="return" %}
+    {{ var }}
+        {% for condition in conditions %}:code:`{{ condition }}`
+        {% endfor %}
+    {% endif %}{% endfor %}
+    {% if contract["return"] | length %}Postconditions
+**Postconditions:**
+    {% for condition in contract["return"] %}
+    :code:`{{condition}}`{% endfor %}{% endif %}
+    {%- endmacro %}

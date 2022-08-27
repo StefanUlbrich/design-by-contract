@@ -2,10 +2,13 @@ from inspect import signature
 from typing import Annotated, Any
 
 import numpy as np
-from numpy.typing import NDArray
 import pandas as pd
 import pytest
-from design_by_contract import contract, ContractViolationError, UnresolvedSymbol
+from jinja2 import Environment
+from numpy.typing import NDArray
+
+from design_by_contract import ContractViolationError, UnresolvedSymbol, contract
+
 
 # pylint: skip-file
 class TestNumpy:
@@ -240,6 +243,24 @@ class TestGeneral:
             return a @ b
 
         spam(np.zeros((3, 2)), np.zeros((2, 4)))
+
+    def test_docstring_injection(self) -> None:
+        
+        env = Environment()
+
+        @contract(jinja=env)
+        def spam(
+            a: Annotated[NDArray[np.floating[Any]], lambda a, m, n: (m, n) == a.shape],
+            b: Annotated[NDArray[np.floating[Any]], lambda b, n, o: (n, o) == b.shape, lambda b, n, o: (n, o) == b.shape],
+        ) -> Annotated[NDArray[np.floating[Any]], lambda x, m, o: x.shape == (m, o)]:
+            """Test function {{ a }}, {{ b }}"""
+            return a @ b
+
+        print(spam.__doc__)
+        assert (
+            spam.__doc__ == "Test function ['lambda a, m, n: (m, n) == a.shape'], "
+            "['lambda b, n, o: (n, o) == b.shape', 'lambda b, n, o: (n, o) == b.shape']"
+        )
 
 
 class TestPandas:
