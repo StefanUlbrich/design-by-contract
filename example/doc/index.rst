@@ -6,11 +6,16 @@
 Welcome to Design-by-contract example's documentation!
 ======================================================
 
+ .. autofunction:: example.spam
+   
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
 .. autosummary::
+   :toctree: API
+   :recursive:
+
 
    example
 

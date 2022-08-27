@@ -18,33 +18,27 @@ def spam(
 ) -> Annotated[NDArray[np.floating[Any]], lambda x, m, n, o: x.shape == (m + n, o)]:
     """Stack two arrays
 
+    **Contracts**
+    {% import 'dbc.j2' as dbc %}{{ dbc.document(contract) | indent }}
+
     Parameters
     ----------
     first: NDarray
         The first array.
 
-        {% for i in first %}
-        :code:`{{ i }}`{% endfor %}
+        {% for i in first %}:code:`{{ i }}`
+        {% endfor %}
     second: NDarray
         The second array.
 
-        {% for i in second %}
-        :code:`{{ i }}`{% endfor %}
+        {% for i in second %}:code:`{{ i }}`
+        {% endfor %}
+
     Returns
     -------
     NdArray
         The stacked arrays.
-
-    Contracts
-    ---------
-
-    {% import 'dbc.j2' as dbc %}{{ dbc.document(contract) }}
     """
     return np.vstack((first, second))
 
 
-# env.from_string(
-#     "{% import 'dbc.j2' as dbc %}{{ dbc.document(contract) }}"
-# ).render(
-#     contract={"a": ["lambda x: x>2", "lamda x: x <5"]}
-# )

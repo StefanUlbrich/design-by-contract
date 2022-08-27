@@ -12,15 +12,20 @@ try:
     import asttokens
     from jinja2 import Template, Environment
 
-    __MODIFY_DOCSTRINGS__ = True
+    __HAS_JINJA2__ = True
+    # print(__HAS_JINJA2__)
 except ImportError:
-    __MODIFY_DOCSTRINGS__ = False
+    __HAS_JINJA2__ = False
+    # print(__HAS_JINJA2__)
+
     # Todo does: `Environment` = Any work?
     class Environment:  # type: ignore
         """Placeholer class if jinja is not found"""
 
 
 logger = logging.getLogger(__name__)
+
+logger.info("Using templates: %s", __HAS_JINJA2__)
 
 
 class ContractViolationError(Exception):
@@ -75,7 +80,7 @@ R = TypeVar("R")
 
 def get_predicate_src(func: Callable[P, R], jinja: Optional[Environment]) -> Dict[str, list[str]]:
     """Extract the source code of the predicates."""
-    if not __MODIFY_DOCSTRINGS__:
+    if not __HAS_JINJA2__:
         return {}
 
     src = dedent(getsource(func))
@@ -96,7 +101,20 @@ def get_predicate_src(func: Callable[P, R], jinja: Optional[Environment]) -> Dic
         if isinstance(i.annotation, ast.Subscript) and i.annotation.value.id == "Annotated"  #  type: ignore
     }
 
+    if func_def.returns:
+        if isinstance(func_def.returns, ast.Subscript) and (func_def.returns.value.id == "Annotated"):  #  type: ignore
+            sources["return"] = [
+                src[i.first_token.startpos : i.last_token.endpos]  #  type: ignore
+                for i in func_def.returns.slice.elts  #  type: ignore
+                if isinstance(i, ast.Lambda)
+            ]
+    else:
+        sources["return"] = []
+    # FIXME missing returns
+
+    # print(jinja, func.__doc__)
     if jinja is not None and func.__doc__ is not None:
+        print(sources)
         func.__doc__ = jinja.from_string(func.__doc__).render(sources | {"contract": sources})
 
     return sources
@@ -228,40 +246,39 @@ def contract(
     return decorator
 
 
-# if __name__ == "__main__":
-#     # Example
-#     from numpy.typing import NDArray
-#     import numpy as np
-#     from typing import Annotated
+if __name__ == "__main__":
+    # Example
+    from numpy.typing import NDArray
+    import numpy as np
+    from typing import Annotated
+    from jinja2 import Environment
 
-#     logging.basicConfig(format="%(name)s %(levelname)s [%(funcName)s:%(lineno)d] %(message)s")
-#     logger.setLevel(logging.DEBUG)
+    logging.basicConfig(format="%(name)s %(levelname)s [%(funcName)s:%(lineno)d] %(message)s")
+    logger.setLevel(logging.DEBUG)
 
-#     @contract(inject=True)
-#     def spam(
-#         a: Annotated[NDArray[Any], lambda a, m, n: (m, n) == a.shape],
-#         b: Annotated[NDArray[Any], lambda b, n, o: (n, o) == b.shape, lambda b, n, o: (n, o) == b.shape],
-#     ) -> Annotated[NDArray[Any], lambda x, m, o: x.shape == (m, o)]:
-#         """
-#         Test function
+    env = Environment()
 
-#         Parameters
-#         ----------
+    @contract(jinja=env)
+    def spam(
+        a: Annotated[NDArray[np.floating[Any]], lambda a, m, n: (m, n) == a.shape],
+        b: Annotated[NDArray[np.floating[Any]], lambda b, n, o: (n, o) == b.shape, lambda b, n, o: (n, o) == b.shape],
+    ) -> Annotated[NDArray[np.floating[Any]], lambda x, m, o: x.shape == (m, o)]:
+        """
+        Test function
 
-#         a
-#             {% for i in a %}
-#             :code:`{{ i }}`{% endfor %}
+        Parameters
+        ----------
 
-#         b
-#             {% for i in b %}
-#             :code:`{{ i }}`{% endfor %}
+        a
+            {% for i in a %}
+            :code:`{{ i }}`{% endfor %}
 
-#         Returns
-#         -------
-#         _type_
-#             _description_
-#         """
-#         return a @ b
+        b
+            {% for i in b %}
+            :code:`{{ i }}`{% endfor %}
 
-#     logger.debug("Docstring: %s\n%s", spam.__doc__, str(signature(spam)) )
-#     spam(np.zeros((3, 2)), np.zeros((2, 4)))
+        """
+        return a @ b
+
+    logger.debug("Docstring: %s\n%s", spam.__doc__, str(signature(spam)))
+    # spam(np.zeros((3, 2)), np.zeros((2, 4)))
